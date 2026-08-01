@@ -554,6 +554,29 @@ const Engine = {
     },
 
     /**
+     * Pausa el juego (alias para compatibilidad)
+     */
+    pause() {
+        this.setPaused(true);
+    },
+
+    /**
+     * Reanuda el juego (alias para compatibilidad)
+     */
+    resume() {
+        this.setPaused(false);
+    },
+
+    /**
+     * Obtiene entidades por tipo/clase
+     * @param {Function} entityType - Constructor del tipo de entidad
+     * @returns {Array} Array de entidades del tipo especificado
+     */
+    getEntitiesByType(entityType) {
+        return this.entities.filter(e => e instanceof entityType);
+    },
+
+    /**
      * Loop principal del juego
      * @param {number} currentTime - Tiempo actual en milisegundos
      */
