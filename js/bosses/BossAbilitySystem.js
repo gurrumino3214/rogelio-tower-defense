@@ -2,10 +2,20 @@
  * BossAbilitySystem.js - Sistema de habilidades para bosses
  * Maneja cooldowns, ejecución de habilidades y efectos
  * 
+ * Soporta los siguientes tipos de habilidades:
+ * - Invocar enemigos (summon)
+ * - Rugidos (roar) - buffs/debuffs en área
+ * - Proyectiles (projectile)
+ * - Golpes (slam) - daño en área cercana
+ * - Explosiones (explosion)
+ * - Maldiciones (curse) - debuffs persistentes
+ * - Invulnerabilidad temporal (invulnerability)
+ * 
  * @module bosses/BossAbilitySystem
  */
 
 import { EventEmitter } from '../utils/EventEmitter.js';
+import { EffectExecutors, EffectTypes } from './BossAbilityEffects.js';
 
 /**
  * Gestiona una habilidad individual con su estado y cooldowns
@@ -272,15 +282,75 @@ class BossAbilitySystem extends EventEmitter {
      */
     executeAbilityEffect(ability) {
         const effect = ability.effect;
+        const effectType = effect.type;
+        
+        // Obtener executor para este tipo de efecto
+        const executor = EffectExecutors[effectType];
+        
+        if (!executor) {
+            console.warn(`[BossAbilitySystem] No hay executor para efecto: ${effectType}`);
+            return;
+        }
+        
+        // Crear contexto para la ejecución
+        const context = this.createExecutionContext();
+        
+        // Ejecutar el efecto
+        const result = executor(this.boss, effect, context);
         
         this.emit('executeEffect', {
             ability: ability,
             effect: effect,
-            boss: this.boss
+            boss: this.boss,
+            result: result,
+            effectType: effectType
         });
-        
-        // El sistema externo maneja la ejecución real del efecto
-        // Este sistema solo notifica qué efecto debe ejecutarse
+    }
+    
+    /**
+     * Crear contexto de ejecución para los efectos
+     * @returns {Object}
+     */
+    createExecutionContext() {
+        return {
+            // Callback para spawn de enemigos
+            onSpawn: (enemies) => {
+                this.emit('spawnEnemies', { enemies, boss: this.boss });
+            },
+            
+            // Obtener entidades en radio
+            getEntitiesInRadius: (x, y, radius) => {
+                const entities = [];
+                this.emit('getEntitiesInRadius', { x, y, radius, callback: (results) => {
+                    entities.push(...results);
+                }});
+                return entities;
+            },
+            
+            // Obtener posición del jugador
+            getPlayerPosition: () => {
+                let position = { x: 0, y: 0 };
+                this.emit('getPlayerPosition', { callback: (pos) => {
+                    position = pos;
+                }});
+                return position;
+            },
+            
+            // Spawn de proyectiles
+            onSpawnProjectile: (projectile) => {
+                this.emit('spawnProjectile', { projectile, boss: this.boss });
+            },
+            
+            // Crear zona en suelo
+            onCreateGroundZone: (zone) => {
+                this.emit('createGroundZone', { zone, boss: this.boss });
+            },
+            
+            // Fin de invulnerabilidad
+            onInvulnerabilityEnd: (boss) => {
+                this.emit('invulnerabilityEnd', { boss });
+            }
+        };
     }
     
     /**
@@ -492,3 +562,4 @@ class BossAbilitySystem extends EventEmitter {
 }
 
 export { BossAbility, BossAbilitySystem };
+export { EffectTypes, EffectExecutors } from './BossAbilityEffects.js';

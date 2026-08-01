@@ -240,6 +240,86 @@ const CursedPencilConfig = {
                 damageTick: 500,
                 animation: 'ink_puddles'
             }
+        },
+        
+        // NUEVAS HABILIDADES - Ejemplos de cómo agregar más
+        
+        roar_fury: {
+            id: 'roar_fury',
+            name: 'Rugido de Furia',
+            description: 'Aumenta el daño de todos los aliados cercanos y reduce el daño enemigo',
+            cooldown: 25000,
+            castTime: 1000,
+            manaCost: 0,
+            
+            effect: {
+                type: 'roar',
+                buffType: 'damage_boost',
+                buffValue: 1.5,
+                buffDuration: 8000,
+                debuffType: 'fear',
+                debuffValue: 0.7,
+                debuffDuration: 4000,
+                radius: 300,
+                animation: 'roar_fury',
+                sound: 'boss_roar'
+            }
+        },
+        
+        projectile_barrage: {
+            id: 'projectile_barrage',
+            name: 'Lluvia de Proyectiles',
+            description: 'Dispara múltiples proyectiles malditos en abanico',
+            cooldown: 12000,
+            castTime: 800,
+            manaCost: 0,
+            
+            effect: {
+                type: 'projectile',
+                projectileType: 'cursed_ink',
+                damage: 25,
+                speed: 350,
+                count: 8,
+                spreadAngle: 60,
+                homing: false,
+                animation: 'shoot_projectiles'
+            }
+        },
+        
+        curse_weakness: {
+            id: 'curse_weakness',
+            name: 'Maldición de Debilidad',
+            description: 'Reduce el daño de todas las torres cercanas',
+            cooldown: 20000,
+            castTime: 1200,
+            manaCost: 0,
+            
+            effect: {
+                type: 'curse',
+                curseType: 'weakness',
+                curseValue: 0.5,
+                curseDuration: 12000,
+                radius: 400,
+                affectAll: true,
+                animation: 'curse_cast'
+            }
+        },
+        
+        invulnerability_shield: {
+            id: 'invulnerability_shield',
+            name: 'Escudo de Oscuridad',
+            description: 'Se vuelve invulnerable temporalmente',
+            cooldown: 35000,
+            castTime: 500,
+            manaCost: 0,
+            
+            effect: {
+                type: 'invulnerability',
+                duration: 4000,
+                immunityType: 'all',
+                visualEffect: 'dark_shield',
+                soundEffect: 'shield_activate'
+            }
         }
     },
     
