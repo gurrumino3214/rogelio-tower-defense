@@ -1,1 +1,19 @@
-Nothing should be ignored based on the provided file changes, as they only include source/config files (.md, .js, .html).
+```
+# Dependencies
+node_modules/
+
+# Editor/IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*.tmp
+
+# Logs
+*.log
+
+# Environment
+.env
+.env.local
+*.env.*
+```
