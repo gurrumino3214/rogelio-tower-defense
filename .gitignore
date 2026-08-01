@@ -4,7 +4,6 @@ node_modules/
 
 # Editor/IDE files
 .vscode/
-.idea/
 *.swp
 *.swo
 *.tmp
@@ -16,4 +15,27 @@ node_modules/
 .env
 .env.local
 *.env.*
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Build outputs
+dist/
+build/
+*.min.js
+*.bundle.js
+
+# Coverage
+coverage/
+htmlcov/
+.coverage
+
+# Temporary files
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db
 ```
