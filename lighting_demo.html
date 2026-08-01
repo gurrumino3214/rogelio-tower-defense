@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Iluminación Dinámica - Pixel Art</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #0a0a0f;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Courier New', monospace;
+            overflow: hidden;
+        }
+        
+        #game-container {
+            position: relative;
+            width: 800px;
+            height: 600px;
+            max-width: 100%;
+            max-height: 100vh;
+        }
+        
+        #gameCanvas {
+            display: block;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+            width: 100%;
+            height: 100%;
+        }
+        
+        #controls {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: #fff;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 5px;
+            font-size: 12px;
+            z-index: 100;
+        }
+        
+        #controls h3 {
+            margin-bottom: 10px;
+            color: #ffcc00;
+        }
+        
+        #controls p {
+            margin: 5px 0;
+        }
+        
+        .btn {
+            background: #333;
+            border: 2px solid #666;
+            color: #fff;
+            padding: 5px 10px;
+            margin: 3px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 11px;
+            border-radius: 3px;
+        }
+        
+        .btn:hover {
+            background: #555;
+            border-color: #ffcc00;
+        }
+        
+        .btn-group {
+            margin: 8px 0;
+        }
+        
+        #stats {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: #0f0;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 11px;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        
+        <div id="controls">
+            <h3>🔦 Sistema de Iluminación</h3>
+            <p><strong>Inspirado en:</strong> Hyper Light Drifter, Blasphemous</p>
+            
+            <div class="btn-group">
+                <button class="btn" onclick="demo.addTorchDemo()">🕯️ Añadir Antorchas</button>
+                <button class="btn" onclick="demo.addExplosionDemo()">💥 Explosión</button>
+                <button class="btn" onclick="demo.addMagicDemo()">✨ Magia</button>
+                <button class="btn" onclick="demo.addLightningDemo()">⚡ Rayo</button>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn" onclick="demo.toggleShadows()">🌑 Sombras</button>
+                <button class="btn" onclick="demo.toggleVignette()">◐ Viñeta</button>
+                <button class="btn" onclick="demo.toggleFog()">🌫️ Niebla</button>
+                <button class="btn" onclick="demo.triggerFlicker()">⚡ Parpadeo</button>
+            </div>
+            
+            <div class="btn-group">
+                <button class="btn" onclick="demo.dayNight()">🌙 Día/Noche</button>
+                <button class="btn" onclick="demo.clearAll()">🗑️ Limpiar Todo</button>
+            </div>
+            
+            <p style="margin-top: 10px; color: #888;">Click en el canvas para añadir luz</p>
+        </div>
+        
+        <div id="stats">
+            <div>Luces: <span id="lightCount">0</span></div>
+            <div>Partículas: <span id="particleCount">0</span></div>
+            <div>FPS: <span id="fps">0</span></div>
+        </div>
+    </div>
+    
+    <script src="js/utils/LightingSystem.js"></script>
+    <script>
+        // Demo del sistema de iluminación
+        const demo = {
+            canvas: null,
+            ctx: null,
+            width: 800,
+            height: 600,
+            lastTime: 0,
+            fps: 0,
+            frameCount: 0,
+            fpsTime: 0,
+            showShadows: true,
+            
+            init() {
+                this.canvas = document.getElementById('gameCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.ctx.imageSmoothingEnabled = false;
+                
+                // Inicializar sistema de iluminación
+                LightingSystem.init(this.width, this.height);
+                
+                // Configurar escena inicial
+                this.setupScene();
+                
+                // Event listeners
+                this.canvas.addEventListener('click', (e) => this.handleClick(e));
+                
+                // Iniciar loop
+                requestAnimationFrame((t) => this.loop(t));
+            },
+            
+            setupScene() {
+                // Añadir antorchas en las paredes
+                LightingSystem.addTorch(100, 100, 150, 'torch');
+                LightingSystem.addTorch(700, 100, 150, 'torch');
+                LightingSystem.addTorch(100, 500, 150, 'torch');
+                LightingSystem.addTorch(700, 500, 150, 'torch');
+                
+                // Luz central mágica
+                LightingSystem.addStaticLight(400, 300, 200, LightingSystem.colorPalette.magic, 0.6);
+                
+                // Añadir obstáculos para sombras
+                LightingSystem.addShadowCaster(300, 200, 50, 200);
+                LightingSystem.addShadowCaster(450, 200, 50, 200);
+                LightingSystem.addShadowCaster(200, 350, 150, 50);
+                LightingSystem.addShadowCaster(450, 350, 150, 50);
+            },
+            
+            handleClick(e) {
+                const rect = this.canvas.getBoundingClientRect();
+                const scaleX = this.canvas.width / rect.width;
+                const scaleY = this.canvas.height / rect.height;
+                
+                const x = (e.clientX - rect.left) * scaleX;
+                const y = (e.clientY - rect.top) * scaleY;
+                
+                // Añadir luz donde se hizo click
+                LightingSystem.addStaticLight(
+                    x, y, 
+                    100 + Math.random() * 50, 
+                    {
+                        r: 100 + Math.random() * 155,
+                        g: 100 + Math.random() * 155,
+                        b: 200 + Math.random() * 55
+                    },
+                    0.8 + Math.random() * 0.2
+                );
+            },
+            
+            addTorchDemo() {
+                for (let i = 0; i < 5; i++) {
+                    const x = 150 + Math.random() * 500;
+                    const y = 150 + Math.random() * 300;
+                    const colors = ['torch', 'magic', 'moonlight'];
+                    const color = colors[Math.floor(Math.random() * colors.length)];
+                    LightingSystem.addTorch(x, y, 100 + Math.random() * 50, color);
+                }
+            },
+            
+            addExplosionDemo() {
+                const x = 200 + Math.random() * 400;
+                const y = 200 + Math.random() * 200;
+                LightingSystem.addExplosion(x, y, 250, 0.6);
+            },
+            
+            addMagicDemo() {
+                const types = ['blue', 'purple', 'green', 'red'];
+                for (let i = 0; i < 3; i++) {
+                    const x = 200 + Math.random() * 400;
+                    const y = 200 + Math.random() * 200;
+                    const type = types[Math.floor(Math.random() * types.length)];
+                    LightingSystem.addMagicEffect(x, y, 60 + Math.random() * 40, type, 2);
+                }
+            },
+            
+            addLightningDemo() {
+                const startX = 100 + Math.random() * 600;
+                const endX = 100 + Math.random() * 600;
+                LightingSystem.addLightning(startX, 50, endX, 550, 0.4);
+            },
+            
+            toggleShadows() {
+                this.showShadows = !this.showShadows;
+                if (this.showShadows) {
+                    LightingSystem.config.shadowResolution = 1;
+                } else {
+                    LightingSystem.config.shadowResolution = 0;
+                }
+            },
+            
+            toggleVignette() {
+                LightingSystem.config.vignetteStrength = 
+                    LightingSystem.config.vignetteStrength > 0.3 ? 0.1 : 0.7;
+            },
+            
+            toggleFog() {
+                LightingSystem.config.fogDensity = 
+                    LightingSystem.config.fogDensity > 0.0001 ? 0 : 0.0005;
+            },
+            
+            triggerFlicker() {
+                LightingSystem.triggerFlicker(1.5, 12);
+            },
+            
+            dayNight() {
+                const isNight = LightingSystem.config.ambientLight > 0.3;
+                LightingSystem.transitionDayNight(isNight, 2);
+            },
+            
+            clearAll() {
+                LightingSystem.clearLights();
+                LightingSystem.clearParticles();
+                LightingSystem.clearShadowCasters();
+                this.setupScene();
+            },
+            
+            updateStats() {
+                document.getElementById('lightCount').textContent = LightingSystem.lightSources.length;
+                document.getElementById('particleCount').textContent = LightingSystem.particles.length;
+                document.getElementById('fps').textContent = this.fps;
+            },
+            
+            renderBackground() {
+                // Fondo oscuro con gradiente
+                const gradient = this.ctx.createLinearGradient(0, 0, 0, this.height);
+                gradient.addColorStop(0, '#1a1a2e');
+                gradient.addColorStop(1, '#0f0f1a');
+                this.ctx.fillStyle = gradient;
+                this.ctx.fillRect(0, 0, this.width, this.height);
+                
+                // Dibujar suelo/piso pixel art style
+                this.ctx.fillStyle = '#2a2a3e';
+                for (let y = 0; y < this.height; y += 40) {
+                    for (let x = 0; x < this.width; x += 40) {
+                        if ((x + y) % 80 === 0) {
+                            this.ctx.fillRect(x, y, 38, 38);
+                        }
+                    }
+                }
+                
+                // Dibujar obstáculos
+                this.ctx.fillStyle = '#3a3a4e';
+                this.ctx.fillRect(300, 200, 50, 200);
+                this.ctx.fillRect(450, 200, 50, 200);
+                this.ctx.fillRect(200, 350, 150, 50);
+                this.ctx.fillRect(450, 350, 150, 50);
+                
+                // Borde de los obstáculos
+                this.ctx.strokeStyle = '#5a5a6e';
+                this.ctx.lineWidth = 2;
+                this.ctx.strokeRect(300, 200, 50, 200);
+                this.ctx.strokeRect(450, 200, 50, 200);
+                this.ctx.strokeRect(200, 350, 150, 50);
+                this.ctx.strokeRect(450, 350, 150, 50);
+                
+                // Decoración pixel art - columnas
+                this.ctx.fillStyle = '#4a4a5e';
+                for (let i = 0; i < 5; i++) {
+                    const x = 80 + i * 160;
+                    this.ctx.fillRect(x - 15, 80, 30, 440);
+                    
+                    // Detalles de la columna
+                    this.ctx.fillStyle = '#5a5a6e';
+                    this.ctx.fillRect(x - 18, 80, 36, 10);
+                    this.ctx.fillRect(x - 18, 510, 36, 10);
+                    this.ctx.fillStyle = '#4a4a5e';
+                }
+            },
+            
+            loop(currentTime) {
+                // Calcular delta time
+                const dt = Math.min((currentTime - this.lastTime) / 1000, 0.1);
+                this.lastTime = currentTime;
+                
+                // Calcular FPS
+                this.frameCount++;
+                if (currentTime - this.fpsTime >= 1000) {
+                    this.fps = this.frameCount;
+                    this.frameCount = 0;
+                    this.fpsTime = currentTime;
+                }
+                
+                // Actualizar sistema de iluminación
+                LightingSystem.update(dt);
+                
+                // Renderizar fondo
+                this.renderBackground();
+                
+                // Renderizar iluminación
+                LightingSystem.render(this.ctx, this.width, this.height);
+                
+                // Actualizar stats
+                this.updateStats();
+                
+                // Continuar loop
+                requestAnimationFrame((t) => this.loop(t));
+            }
+        };
+        
+        // Iniciar cuando cargue la página
+        window.addEventListener('load', () => demo.init());
+    </script>
+</body>
+</html>
