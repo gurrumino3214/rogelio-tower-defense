@@ -722,8 +722,8 @@ function startGameFromMenu() {
         // Actualizar HUD
         updateHUD();
 
-        // Spawnear primer enemigo
-        spawnEnemy();
+        // Iniciar primera oleada usando waveManager
+        waveManager.startWave(player.wave);
         
         console.log('[MENU] Juego iniciado - Canvas:', gameCanvas ? 'visible' : 'no encontrado');
     });

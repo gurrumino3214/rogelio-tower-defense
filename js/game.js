@@ -2,19 +2,123 @@
 // ROGELIO TOWER DEFENSE - GAME.JS
 // ==========================================
 // Este archivo contiene la lógica principal del juego.
-// NO modificar las funciones básicas del juego.
+// Integración completa con sprites, partículas y efectos.
 // ==========================================
 
 // Configuración del juego
-// const CANVAS_WIDTH = 800; // Ya no se usa, el canvas es dinámico
-// const CANVAS_HEIGHT = 600; // Ya no se usa, el canvas es dinámico
-
-// Variables globales
 let canvas, ctx;
-let gameState = 'MENU'; // MENU, PLAYING, PAUSED, GAMEOVER
+let gameState = 'MENU'; // MENU, PLAYING, PAUSED, GAMEOVER, VICTORY
 let lastTime = 0;
 let gameSpeed = 1;
 let gameStartTime = 0;
+
+// Sistema de oleadas
+let waveManager = {
+    currentWave: 1,
+    enemiesToSpawn: 0,
+    enemiesSpawned: 0,
+    enemiesRemaining: 0,
+    spawnTimer: 0,
+    spawnInterval: 2000,
+    waveActive: false,
+    bossWave: false,
+    
+    startWave: function(wave) {
+        this.currentWave = wave;
+        this.bossWave = (wave % 10 === 0);
+        this.enemiesToSpawn = 5 + Math.floor(wave * 1.5);
+        if (this.bossWave) {
+            this.enemiesToSpawn = 3; // Menos enemigos normales en oleada de boss
+        }
+        this.enemiesSpawned = 0;
+        this.enemiesRemaining = this.enemiesToSpawn;
+        this.waveActive = true;
+        this.spawnTimer = 0;
+        console.log('[WAVE] Oleada ' + wave + ' iniciada. Enemigos: ' + this.enemiesToSpawn + (this.bossWave ? ' + BOSS' : ''));
+    },
+    
+    update: function(deltaTime) {
+        if (!this.waveActive) return false;
+        
+        // Spawnear enemigos
+        if (this.enemiesSpawned < this.enemiesToSpawn) {
+            this.spawnTimer += deltaTime * gameSpeed;
+            if (this.spawnTimer >= this.spawnInterval) {
+                this.spawnTimer = 0;
+                this.spawnEnemy();
+                this.enemiesSpawned++;
+            }
+        }
+        
+        // Verificar si la oleada terminó
+        this.enemiesRemaining = enemies.length + (bossRogelio && bossActive ? 1 : 0);
+        if (this.enemiesSpawned >= this.enemiesToSpawn && this.enemiesRemaining <= 0) {
+            this.waveActive = false;
+            this.completeWave();
+            return true;
+        }
+        return false;
+    },
+    
+    spawnEnemy: function() {
+        if (this.bossWave) {
+            // En oleada de boss, spawnear pocos enemigos antes del boss
+            let enemyType = getEnemyTypeForWave(this.currentWave);
+            createEnemy(enemyType);
+        } else {
+            let enemyType = getEnemyTypeForWave(this.currentWave);
+            createEnemy(enemyType);
+        }
+    },
+    
+    completeWave: function() {
+        player.wave++;
+        console.log('[WAVE] Oleada ' + (player.wave - 1) + ' completada!');
+        
+        // Guardar max wave
+        const stats = JSON.parse(localStorage.getItem('rogelioTD_stats') || '{}');
+        if (!stats.maxWave || player.wave > stats.maxWave) {
+            stats.maxWave = player.wave;
+            localStorage.setItem('rogelioTD_stats', JSON.stringify(stats));
+        }
+        
+        // Iniciar siguiente oleada después de 2 segundos
+        setTimeout(() => {
+            if (gameState === 'PLAYING') {
+                waveManager.startWave(player.wave);
+                
+                // Si es oleada de boss, spawnear a Rogelio después de un mensaje
+                if (waveManager.bossWave) {
+                    setTimeout(spawnBossRogelio, 1000);
+                }
+            }
+        }, 2000);
+    }
+};
+
+// Variables globales del juego
+let player = {
+    money: 100,
+    lives: 10,
+    wave: 1
+};
+
+// Entidades
+let towers = [];
+let enemies = [];
+let bullets = [];
+
+// Sistema de boss Rogelio
+let bossRogelio = null;
+let bossActive = false;
+let bossHealthBarVisible = false;
+let screenShakeIntensity = 0;
+let roglioAppearedText = '';
+let roglioAppearedAlpha = 0;
+
+// Tamaño del mundo (más grande que el viewport)
+let worldWidth = 2048;
+let worldHeight = 1536;
 
 // ==========================================
 // SISTEMA DE CÁMARA
@@ -26,10 +130,6 @@ let camera = {
     width: 0,
     height: 0
 };
-
-// Tamaño del mundo (más grande que el viewport)
-let worldWidth = 2048;
-let worldHeight = 1536;
 
 function initCamera() {
     camera.width = canvas.width;
@@ -71,17 +171,31 @@ function initDecorations() {
     decorations = [];
     const tileSize = 64;
     
-    // Generar decoraciones aleatorias en el mundo
-    for (let i = 0; i < 150; i++) {
-        const type = ['tree', 'bush', 'rock', 'flower'][Math.floor(Math.random() * 4)];
-        const alt = Math.random() > 0.5 ? '_alt' : '';
+    // Generar decoraciones con posiciones consistentes usando semilla
+    const positions = [
+        {type: 'tree', x: 200, y: 150}, {type: 'tree_alt', x: 250, y: 180},
+        {type: 'bush', x: 400, y: 300}, {type: 'bush_alt', x: 450, y: 320},
+        {type: 'rock', x: 600, y: 500}, {type: 'rock_alt', x: 650, y: 520},
+        {type: 'flower', x: 800, y: 700}, {type: 'flower_alt', x: 850, y: 720},
+        {type: 'tree', x: 1000, y: 200}, {type: 'tree_alt', x: 1100, y: 250},
+        {type: 'bush', x: 1200, y: 400}, {type: 'bush_alt', x: 1300, y: 450},
+        {type: 'rock', x: 1400, y: 600}, {type: 'rock_alt', x: 1500, y: 650},
+        {type: 'flower', x: 1600, y: 800}, {type: 'flower_alt', x: 1700, y: 850},
+        {type: 'tree', x: 300, y: 900}, {type: 'tree_alt', x: 400, y: 950},
+        {type: 'bush', x: 500, y: 1000}, {type: 'bush_alt', x: 600, y: 1050},
+        {type: 'rock', x: 700, y: 1100}, {type: 'rock_alt', x: 800, y: 1150},
+        {type: 'flower', x: 900, y: 1200}, {type: 'flower_alt', x: 1000, y: 1250}
+    ];
+    
+    for (let i = 0; i < positions.length; i++) {
+        const pos = positions[i];
         decorations.push({
-            type: type + alt,
-            x: Math.random() * worldWidth,
-            y: Math.random() * worldHeight,
+            type: pos.type,
+            x: pos.x,
+            y: pos.y,
             width: tileSize,
             height: tileSize,
-            layer: Math.floor(Math.random() * 3) // Para ordenamiento Z
+            layer: Math.floor(pos.y / 100) // Para ordenamiento Z basado en Y
         });
     }
     
@@ -89,33 +203,11 @@ function initDecorations() {
     decorations.sort((a, b) => (a.layer - b.layer) || (a.y - b.y));
 }
 
-// Elementos del juego
-let player = {
-    money: 100,
-    lives: 10,
-    wave: 1
-};
-
-// Entidades
-let towers = [];
-let enemies = [];
-let bullets = [];
-let particles = [];
-
-// Sistema de boss Rogelio
-let bossRogelio = null;
-let bossActive = false;
-let bossHealthBarVisible = false;
-let screenShakeIntensity = 0;
-let roglioAppearedText = '';
-let roglioAppearedAlpha = 0;
-
 // Camino (waypoints) - En coordenadas del mundo
 let path = [];
 
 function initPath() {
     // El camino ahora usa coordenadas del mundo, no del canvas
-    // Esto asegura que el camino permanezca en su lugar cuando la cámara se mueve
     path = [
         {x: 0, y: worldHeight * 0.17},
         {x: worldWidth * 0.25, y: worldHeight * 0.17},
@@ -212,19 +304,16 @@ function handleClick(e) {
 }
 
 // ==========================================
-// SPAWN DE ENEMIGOS
+// SPAWN DE ENEMIGOS (legacy - ahora usa waveManager)
 // ==========================================
 function spawnEnemy() {
+    // Esta función es legacy, ahora se usa waveManager.spawnEnemy()
+    console.warn('[GAME] spawnEnemy() legacy llamada - usar waveManager');
+}
+
+// Crear enemigo
+function createEnemy(enemyType) {
     if (gameState !== 'PLAYING') return;
-    
-    // Verificar si es hora de spawnear al boss Rogelio (cada 10 oleadas)
-    if (player.wave % 10 === 0 && !bossActive && !bossRogelio) {
-        spawnBossRogelio();
-        return;
-    }
-    
-    // Determinar tipo de enemigo según oleada
-    let enemyType = getEnemyTypeForWave(player.wave);
     
     enemies.push({
         x: path[0].x,
@@ -242,11 +331,9 @@ function spawnEnemy() {
         animationFrame: 0,
         lastAnimationUpdate: Date.now(),
         hitEffect: false,
-        deathEffect: false
+        deathEffect: false,
+        state: 'walk' // walk, attack, hit, death
     });
-    
-    // Spawnear siguiente enemigo después de 2 segundos
-    setTimeout(spawnEnemy, 2000 / gameSpeed);
 }
 
 // ==========================================
@@ -263,7 +350,7 @@ function getEnemyTypeForWave(wave) {
     
     // Seleccionar tipo basado en la oleada
     let index = Math.min(Math.floor((wave - 1) / 2), types.length - 1);
-    if (wave % 10 === 0) index = types.length - 1; // Skeleton Lord en oleadas pares
+    if (wave % 10 === 0) index = types.length - 1; // Skeleton Lord en oleadas de boss
     
     return types[index];
 }
