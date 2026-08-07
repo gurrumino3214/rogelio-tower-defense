@@ -236,7 +236,13 @@ function spawnEnemy() {
         reward: enemyType.reward,
         color: enemyType.color,
         type: enemyType.name,
-        damage: enemyType.damage || 1
+        damage: enemyType.damage || 1,
+        
+        // Propiedades para animaciones y efectos
+        animationFrame: 0,
+        lastAnimationUpdate: Date.now(),
+        hitEffect: false,
+        deathEffect: false
     });
     
     // Spawnear siguiente enemigo después de 2 segundos
@@ -301,6 +307,9 @@ function spawnBossRogelio() {
 // ==========================================
 function update(deltaTime) {
     if (gameState !== 'PLAYING') return;
+    
+    // Actualizar efectos y partículas
+    updateEffects(deltaTime);
     
     // Actualizar screen shake
     if (screenShakeIntensity > 0) {
@@ -398,8 +407,21 @@ function update(deltaTime) {
                 
                 if (edist < 30) {
                     enemy.health -= bullet.damage;
+                    
+                    // Efecto de impacto visual
+                    if (typeof ParticleSystem !== 'undefined') {
+                        ParticleSystem.emitHit(bullet.targetX, bullet.targetY, '#FFFFFF');
+                        ParticleSystem.emitSparks(bullet.targetX, bullet.targetY, 5, '#FFD700');
+                    }
+                    
                     if (enemy.health <= 0) {
                         player.money += enemy.reward;
+                        
+                        // Efectos de muerte del enemigo
+                        if (typeof ParticleSystem !== 'undefined') {
+                            ParticleSystem.emitExplosion(enemy.x, enemy.y, 15, enemy.color);
+                            ParticleSystem.emitDust(enemy.x, enemy.y, 8);
+                        }
                         
                         // Actualizar estadísticas
                         if (window.menuAPI) {
@@ -412,6 +434,10 @@ function update(deltaTime) {
                         if (window.menuAPI) {
                             window.menuAPI.updateHUD();
                         }
+                    } else {
+                        // Marcar enemigo como golpeado para efecto visual
+                        enemy.hitEffect = true;
+                        setTimeout(() => { enemy.hitEffect = false; }, 100);
                     }
                     break;
                 }
@@ -768,16 +794,44 @@ function drawBossRogelio() {
         spriteKey = `boss/rogelio_roar_${Math.floor((now / 150) % 6)}`;
     }
     
+    // Screen shake effect para Rogelio
+    let shakeX = (Math.random() - 0.5) * screenShakeIntensity * 0.5;
+    let shakeY = (Math.random() - 0.5) * screenShakeIntensity * 0.5;
+    
+    // Dibujar aura roja pulsante alrededor de Rogelio
+    ctx.save();
+    const auraRadius = 70 + Math.sin(now / 200) * 10;
+    const auraGradient = ctx.createRadialGradient(
+        boss.x + shakeX, boss.y + shakeY, 40,
+        boss.x + shakeX, boss.y + shakeY, auraRadius
+    );
+    auraGradient.addColorStop(0, 'rgba(244, 67, 54, 0.3)');
+    auraGradient.addColorStop(0.5, 'rgba(244, 67, 54, 0.15)');
+    auraGradient.addColorStop(1, 'transparent');
+    ctx.fillStyle = auraGradient;
+    ctx.beginPath();
+    ctx.arc(boss.x + shakeX, boss.y + shakeY, auraRadius, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+    
     // Obtener sprite o usar fallback
     if (typeof SpriteManager !== 'undefined') {
         const sprite = SpriteManager.getSprite(spriteKey);
         if (sprite) {
             ctx.imageSmoothingEnabled = false;
-            // Screen shake effect
-            let shakeX = (Math.random() - 0.5) * screenShakeIntensity;
-            let shakeY = (Math.random() - 0.5) * screenShakeIntensity;
+            // Brillo adicional cuando está enraged
+            if (boss.health < boss.maxHealth * 0.3) {
+                ctx.shadowBlur = 20;
+                ctx.shadowColor = '#FF0000';
+            }
             ctx.drawImage(sprite, boss.x - 64 + shakeX, boss.y - 64 + shakeY, 128, 128);
+            ctx.shadowBlur = 0;
             ctx.imageSmoothingEnabled = true;
+            
+            // Emitir partículas del aura
+            if (typeof ParticleSystem !== 'undefined' && Math.random() > 0.7) {
+                ParticleSystem.emitAura(boss.x, boss.y, 60, '#F44336');
+            }
         } else {
             // Fallback: dibujar rectángulo rojo grande
             drawBossFallback(boss);
@@ -929,7 +983,12 @@ function drawWater() {
 // DIBUJADO DE PARTÍCULAS/EFEECTOS
 // ==========================================
 function drawParticles() {
-    // Función placeholder para partículas - se puede expandir
+    // Usar el nuevo sistema de partículas profesional
+    if (typeof ParticleSystem !== 'undefined') {
+        ParticleSystem.draw(ctx);
+    }
+    
+    // Mantener compatibilidad con el sistema antiguo de partículas
     for (let particle of particles) {
         if (!isInViewport(particle.x, particle.y, particle.size || 5, particle.size || 5)) continue;
         
@@ -939,6 +998,21 @@ function drawParticles() {
         ctx.arc(particle.x, particle.y, particle.size || 3, 0, Math.PI * 2);
         ctx.fill();
         ctx.globalAlpha = 1;
+    }
+}
+
+// ==========================================
+// ACTUALIZAR EFECTOS Y PARTÍCULAS
+// ==========================================
+function updateEffects(deltaTime) {
+    // Actualizar sistema de partículas
+    if (typeof ParticleSystem !== 'undefined') {
+        ParticleSystem.update(deltaTime);
+    }
+    
+    // Actualizar efectos visuales
+    if (typeof VisualEffects !== 'undefined') {
+        VisualEffects.update(deltaTime);
     }
 }
 
