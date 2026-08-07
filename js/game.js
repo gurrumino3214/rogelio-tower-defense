@@ -29,6 +29,14 @@ let enemies = [];
 let bullets = [];
 let particles = [];
 
+// Sistema de boss Rogelio
+let bossRogelio = null;
+let bossActive = false;
+let bossHealthBarVisible = false;
+let screenShakeIntensity = 0;
+let roglioAppearedText = '';
+let roglioAppearedAlpha = 0;
+
 // Camino (waypoints)
 const path = [
     {x: 0, y: 100},
@@ -110,19 +118,83 @@ function handleClick(e) {
 function spawnEnemy() {
     if (gameState !== 'PLAYING') return;
     
+    // Verificar si es hora de spawnear al boss Rogelio (cada 10 oleadas)
+    if (player.wave % 10 === 0 && !bossActive && !bossRogelio) {
+        spawnBossRogelio();
+        return;
+    }
+    
+    // Determinar tipo de enemigo según oleada
+    let enemyType = getEnemyTypeForWave(player.wave);
+    
     enemies.push({
         x: path[0].x,
         y: path[0].y,
         waypointIndex: 0,
-        speed: 2,
-        health: 100,
-        maxHealth: 100,
-        reward: 10,
-        color: '#FF5722'
+        speed: enemyType.speed,
+        health: enemyType.health,
+        maxHealth: enemyType.health,
+        reward: enemyType.reward,
+        color: enemyType.color,
+        type: enemyType.name,
+        damage: enemyType.damage || 1
     });
     
     // Spawnear siguiente enemigo después de 2 segundos
     setTimeout(spawnEnemy, 2000 / gameSpeed);
+}
+
+// ==========================================
+// TIPOS DE ENEMIGOS SEGÚN OLEADA
+// ==========================================
+function getEnemyTypeForWave(wave) {
+    const types = [
+        { name: 'goblin', health: 100, speed: 2, reward: 10, color: '#8BC34A', damage: 1 },
+        { name: 'bandit', health: 150, speed: 2.5, reward: 15, color: '#FF5722', damage: 2 },
+        { name: 'skeleton', health: 200, speed: 1.8, reward: 20, color: '#EEEEEE', damage: 2 },
+        { name: 'dark_knight', health: 300, speed: 1.5, reward: 30, color: '#3F51B5', damage: 3 },
+        { name: 'skeleton_lord', health: 500, speed: 1.2, reward: 50, color: '#9C27B0', damage: 4 }
+    ];
+    
+    // Seleccionar tipo basado en la oleada
+    let index = Math.min(Math.floor((wave - 1) / 2), types.length - 1);
+    if (wave % 10 === 0) index = types.length - 1; // Skeleton Lord en oleadas pares
+    
+    return types[index];
+}
+
+// ==========================================
+// SPAWN DEL BOSS ROGELIO
+// ==========================================
+function spawnBossRogelio() {
+    bossActive = true;
+    bossRogelio = {
+        x: path[0].x - 100,
+        y: path[0].y,
+        waypointIndex: 0,
+        speed: 0.8,
+        health: 5000 + (player.wave * 500),
+        maxHealth: 5000 + (player.wave * 500),
+        reward: 500,
+        color: '#F44336',
+        type: 'rogelio',
+        damage: 5,
+        width: 128,
+        height: 128,
+        attackCooldown: 0,
+        specialAttackCooldown: 0,
+        state: 'walking', // walking, attacking, roaring
+        animationFrame: 0,
+        lastAnimationUpdate: 0
+    };
+    
+    // Efectos de aparición
+    screenShakeIntensity = 20;
+    bossHealthBarVisible = true;
+    roglioAppearedText = '¡¡ROGELIO HA APARECIDO!!';
+    roglioAppearedAlpha = 1;
+    
+    console.log('[BOSS] ¡Rogelio ha aparecido!');
 }
 
 // ==========================================
@@ -131,6 +203,23 @@ function spawnEnemy() {
 function update(deltaTime) {
     if (gameState !== 'PLAYING') return;
     
+    // Actualizar screen shake
+    if (screenShakeIntensity > 0) {
+        screenShakeIntensity *= 0.9;
+        if (screenShakeIntensity < 1) screenShakeIntensity = 0;
+    }
+    
+    // Actualizar texto de aparición de Rogelio
+    if (roglioAppearedAlpha > 0) {
+        roglioAppearedAlpha -= deltaTime / 2000;
+        if (roglioAppearedAlpha < 0) roglioAppearedAlpha = 0;
+    }
+    
+    // Actualizar Boss Rogelio
+    if (bossRogelio && bossActive) {
+        updateBossRogelio(deltaTime);
+    }
+
     // Actualizar enemigos
     for (let i = enemies.length - 1; i >= 0; i--) {
         let enemy = enemies[i];
@@ -248,9 +337,122 @@ function update(deltaTime) {
 }
 
 // ==========================================
+// ACTUALIZACIÓN DEL BOSS ROGELIO
+// ==========================================
+function updateBossRogelio(deltaTime) {
+    if (!bossRogelio) return;
+    
+    const boss = bossRogelio;
+    
+    // Mover boss hacia el siguiente waypoint
+    let target = path[boss.waypointIndex + 1];
+    if (target) {
+        let dx = target.x - boss.x;
+        let dy = target.y - boss.y;
+        let dist = Math.sqrt(dx * dx + dy * dy);
+        
+        if (dist < boss.speed * gameSpeed) {
+            boss.waypointIndex++;
+            if (boss.waypointIndex >= path.length - 1) {
+                // Boss llegó al final - Game Over instantáneo
+                player.lives = 0;
+                gameState = 'GAMEOVER';
+                bossActive = false;
+                bossRogelio = null;
+                bossHealthBarVisible = false;
+                
+                if (window.menuAPI) {
+                    window.menuAPI.incrementStat('defeats');
+                }
+                return;
+            }
+        } else {
+            boss.x += (dx / dist) * boss.speed * gameSpeed;
+            boss.y += (dy / dist) * boss.speed * gameSpeed;
+        }
+    }
+    
+    // Actualizar animación
+    boss.animationFrame++;
+    if (boss.animationFrame > 7) boss.animationFrame = 0;
+    
+    // Actualizar cooldowns de ataque
+    boss.attackCooldown -= deltaTime;
+    boss.specialAttackCooldown -= deltaTime;
+    
+    // Ataque normal cada 2 segundos
+    if (boss.attackCooldown <= 0) {
+        boss.attackCooldown = 2000;
+        boss.state = 'attacking';
+        
+        // Daño a torres cercanas
+        for (let i = towers.length - 1; i >= 0; i--) {
+            let tower = towers[i];
+            let tdx = tower.x - boss.x;
+            let tdy = tower.y - boss.y;
+            let tdist = Math.sqrt(tdx * tdx + tdy * tdy);
+            
+            if (tdist < 100) {
+                // Destruir torre
+                towers.splice(i, 1);
+                screenShakeIntensity = 5;
+            }
+        }
+        
+        setTimeout(() => { boss.state = 'walking'; }, 500);
+    }
+    
+    // Ataque especial cada 8 segundos
+    if (boss.specialAttackCooldown <= 0) {
+        boss.specialAttackCooldown = 8000;
+        boss.state = 'roaring';
+        
+        // Rugido - ralentiza torres cercanas temporalmente
+        screenShakeIntensity = 10;
+        
+        setTimeout(() => { 
+            boss.state = 'walking';
+            console.log('[BOSS] Rogelio termina su rugido');
+        }, 1000);
+    }
+    
+    // Verificar si las torres disparan al boss
+    for (let tower of towers) {
+        let dx = boss.x - tower.x;
+        let dy = boss.y - tower.y;
+        let dist = Math.sqrt(dx * dx + dy * dy);
+        
+        if (dist <= tower.range) {
+            let now = Date.now();
+            if (now - tower.lastShot >= tower.fireRate) {
+                tower.lastShot = now;
+                bullets.push({
+                    x: tower.x,
+                    y: tower.y,
+                    targetX: boss.x,
+                    targetY: boss.y,
+                    speed: 10,
+                    damage: tower.damage,
+                    color: '#FF0000',
+                    isBossTarget: true
+                });
+            }
+        }
+    }
+}
+
+// ==========================================
 // DIBUJADO
 // ==========================================
 function draw() {
+    // Aplicar screen shake
+    ctx.save();
+    if (screenShakeIntensity > 0) {
+        let shakeX = (Math.random() - 0.5) * screenShakeIntensity;
+        let shakeY = (Math.random() - 0.5) * screenShakeIntensity;
+        ctx.translate(shakeX, shakeY);
+    }
+    
     // Limpiar canvas
     ctx.fillStyle = '#2d2d44';
     ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
@@ -308,6 +510,118 @@ function draw() {
         ctx.fillRect(enemy.x - 15, enemy.y - 25, 30 * healthPercent, 5);
     }
     
+
+// ==========================================
+// DIBUJADO DEL BOSS ROGELIO
+// ==========================================
+function drawBossRogelio() {
+    if (!bossRogelio) return;
+    
+    const boss = bossRogelio;
+    const now = Date.now();
+    
+    // Determinar frame de animación según estado
+    let animFrame = Math.floor((now / 100) % 8);
+    let spriteKey = `boss/rogelio_walk_${animFrame}`;
+    
+    if (boss.state === 'attacking') {
+        spriteKey = `boss/rogelio_attack_${Math.floor((now / 80) % 8)}`;
+    } else if (boss.state === 'roaring') {
+        spriteKey = `boss/rogelio_roar_${Math.floor((now / 150) % 6)}`;
+    }
+    
+    // Obtener sprite o usar fallback
+    if (typeof SpriteManager !== 'undefined') {
+        const sprite = SpriteManager.getSprite(spriteKey);
+        if (sprite) {
+            ctx.imageSmoothingEnabled = false;
+            // Screen shake effect
+            let shakeX = (Math.random() - 0.5) * screenShakeIntensity;
+            let shakeY = (Math.random() - 0.5) * screenShakeIntensity;
+            ctx.drawImage(sprite, boss.x - 64 + shakeX, boss.y - 64 + shakeY, 128, 128);
+            ctx.imageSmoothingEnabled = true;
+        } else {
+            // Fallback: dibujar rectángulo rojo grande
+            drawBossFallback(boss);
+        }
+    } else {
+        drawBossFallback(boss);
+    }
+    
+    // Barra de vida del boss (si es visible)
+    if (bossHealthBarVisible) {
+        drawBossHealthBar(boss);
+    }
+}
+
+// Fallback para dibujar boss sin sprites
+function drawBossFallback(boss) {
+    let shakeX = (Math.random() - 0.5) * screenShakeIntensity;
+    let shakeY = (Math.random() - 0.5) * screenShakeIntensity;
+    
+    // Cuerpo principal
+    ctx.fillStyle = '#F44336';
+    ctx.beginPath();
+    ctx.arc(boss.x + shakeX, boss.y + shakeY, 50, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Aura roja brillante
+    ctx.strokeStyle = 'rgba(244, 67, 54, 0.5)';
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.arc(boss.x + shakeX, boss.y + shakeY, 60 + Math.sin(Date.now() / 200) * 5, 0, Math.PI * 2);
+    ctx.stroke();
+    
+    // Ojos brillantes
+    ctx.fillStyle = '#FFEB3B';
+    ctx.beginPath();
+    ctx.arc(boss.x - 15 + shakeX, boss.y - 10 + shakeY, 8, 0, Math.PI * 2);
+    ctx.arc(boss.x + 15 + shakeX, boss.y - 10 + shakeY, 8, 0, Math.PI * 2);
+    ctx.fill();
+}
+
+// Barra de vida del boss
+function drawBossHealthBar(boss) {
+    const barWidth = 400;
+    const barHeight = 30;
+    const barX = (CANVAS_WIDTH - barWidth) / 2;
+    const barY = 80;
+    
+    // Fondo oscuro
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+    ctx.fillRect(barX - 5, barY - 25, barWidth + 10, barHeight + 30);
+    
+    // Borde dorado
+    ctx.strokeStyle = '#FFD700';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(barX - 5, barY - 25, barWidth + 10, barHeight + 30);
+    
+    // Nombre
+    ctx.fillStyle = '#FFD700';
+    ctx.font = 'bold 20px "Press Start 2P", cursive';
+    ctx.textAlign = 'center';
+    ctx.fillText('ROGELIO', CANVAS_WIDTH / 2, barY - 5);
+    
+    // Barra de vida fondo
+    ctx.fillStyle = '#333333';
+    ctx.fillRect(barX, barY + 5, barWidth, barHeight);
+    
+    // Vida actual
+    const healthPercent = boss.health / boss.maxHealth;
+    let gradient = ctx.createLinearGradient(barX, barY, barX + barWidth, barY);
+    gradient.addColorStop(0, '#F44336');
+    gradient.addColorStop(0.5, '#FF9800');
+    gradient.addColorStop(1, '#F44336');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(barX, barY + 5, barWidth * healthPercent, barHeight);
+    
+    // Porcentaje
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = '14px "Press Start 2P", cursive';
+    ctx.textAlign = 'right';
+    ctx.fillText(`${Math.round(healthPercent * 100)}%`, barX + barWidth - 5, barY + 25);
+}
+
     // Dibujar balas
     for (let bullet of bullets) {
         ctx.fillStyle = bullet.color;
@@ -318,6 +632,22 @@ function draw() {
     
     // Dibujar UI
     drawUI();
+    
+    // Restaurar contexto después de screen shake
+    ctx.restore();
+    
+    // Dibujar texto de aparición de Rogelio (fuera del shake)
+    if (roglioAppearedAlpha > 0) {
+        ctx.save();
+        ctx.globalAlpha = roglioAppearedAlpha;
+        ctx.fillStyle = '#F44336';
+        ctx.font = 'bold 36px "Press Start 2P", cursive';
+        ctx.textAlign = 'center';
+        ctx.shadowColor = '#FF0000';
+        ctx.shadowBlur = 20;
+        ctx.fillText('¡¡ROGELIO HA APARECIDO!!', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2);
+        ctx.restore();
+    }
 }
 
 // ==========================================
@@ -368,6 +698,15 @@ function restartGameAfterGameOver() {
     towers = [];
     enemies = [];
     bullets = [];
+    particles = [];
+    
+    // Resetear variables del boss
+    bossRogelio = null;
+    bossActive = false;
+    bossHealthBarVisible = false;
+    screenShakeIntensity = 0;
+    roglioAppearedText = '';
+    roglioAppearedAlpha = 0;
 }
 
 // ==========================================
