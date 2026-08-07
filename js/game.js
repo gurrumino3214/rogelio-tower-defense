@@ -1,3 +1,10 @@
+// ==========================================
+// ROGELIO TOWER DEFENSE - GAME.JS
+// ==========================================
+// Este archivo contiene la lógica principal del juego.
+// NO modificar las funciones básicas del juego.
+// ==========================================
+
 // Configuración del juego
 const CANVAS_WIDTH = 800;
 const CANVAS_HEIGHT = 600;
@@ -6,6 +13,8 @@ const CANVAS_HEIGHT = 600;
 let canvas, ctx;
 let gameState = 'MENU'; // MENU, PLAYING, PAUSED, GAMEOVER
 let lastTime = 0;
+let gameSpeed = 1;
+let gameStartTime = 0;
 
 // Elementos del juego
 let player = {
@@ -32,7 +41,9 @@ const path = [
     {x: 800, y: 500}
 ];
 
-// Inicialización
+// ==========================================
+// INICIALIZACIÓN
+// ==========================================
 window.onload = function() {
     canvas = document.getElementById('gameCanvas');
     canvas.width = CANVAS_WIDTH;
@@ -42,28 +53,27 @@ window.onload = function() {
     // Event listeners
     canvas.addEventListener('click', handleClick);
     
-    // Iniciar el juego
+    // Iniciar el juego (se queda en MENU hasta que se presione Jugar)
     startGame();
 };
 
 function startGame() {
-    console.log('Juego iniciado!');
+    console.log('[GAME] Juego iniciado!');
     gameState = 'MENU';
     requestAnimationFrame(gameLoop);
 }
 
+// ==========================================
+// MANEJO DE CLICKS
+// ==========================================
 function handleClick(e) {
     const rect = canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
     
     if (gameState === 'MENU') {
-        // Iniciar juego al hacer click en el menú
-        gameState = 'PLAYING';
-        player.money = 100;
-        player.lives = 10;
-        player.wave = 1;
-        spawnEnemy();
+        // El menú ahora maneja esto, no iniciar directamente
+        return;
     } else if (gameState === 'PLAYING') {
         // Colocar torre
         if (player.money >= 50) {
@@ -77,10 +87,26 @@ function handleClick(e) {
                 lastShot: 0,
                 color: '#4CAF50'
             });
+            
+            // Actualizar estadísticas
+            if (window.menuAPI) {
+                window.menuAPI.incrementStat('towersPlaced');
+            }
+            
+            // Actualizar HUD
+            if (window.menuAPI) {
+                window.menuAPI.updateHUD();
+            }
         }
+    } else if (gameState === 'GAMEOVER') {
+        // Reiniciar después de game over
+        restartGameAfterGameOver();
     }
 }
 
+// ==========================================
+// SPAWN DE ENEMIGOS
+// ==========================================
 function spawnEnemy() {
     if (gameState !== 'PLAYING') return;
     
@@ -96,9 +122,12 @@ function spawnEnemy() {
     });
     
     // Spawnear siguiente enemigo después de 2 segundos
-    setTimeout(spawnEnemy, 2000);
+    setTimeout(spawnEnemy, 2000 / gameSpeed);
 }
 
+// ==========================================
+// ACTUALIZACIÓN DEL JUEGO
+// ==========================================
 function update(deltaTime) {
     if (gameState !== 'PLAYING') return;
     
@@ -113,20 +142,30 @@ function update(deltaTime) {
             let dy = target.y - enemy.y;
             let dist = Math.sqrt(dx * dx + dy * dy);
             
-            if (dist < enemy.speed) {
+            if (dist < enemy.speed * gameSpeed) {
                 enemy.waypointIndex++;
                 if (enemy.waypointIndex >= path.length - 1) {
                     // Enemigo llegó al final
                     player.lives--;
                     enemies.splice(i, 1);
+                    
+                    // Actualizar HUD
+                    if (window.menuAPI) {
+                        window.menuAPI.updateHUD();
+                    }
+                    
                     if (player.lives <= 0) {
                         gameState = 'GAMEOVER';
+                        // Guardar derrota
+                        if (window.menuAPI) {
+                            window.menuAPI.incrementStat('defeats');
+                        }
                     }
                     continue;
                 }
             } else {
-                enemy.x += (dx / dist) * enemy.speed;
-                enemy.y += (dy / dist) * enemy.speed;
+                enemy.x += (dx / dist) * enemy.speed * gameSpeed;
+                enemy.y += (dy / dist) * enemy.speed * gameSpeed;
             }
         }
         
@@ -173,7 +212,18 @@ function update(deltaTime) {
                     enemy.health -= bullet.damage;
                     if (enemy.health <= 0) {
                         player.money += enemy.reward;
+                        
+                        // Actualizar estadísticas
+                        if (window.menuAPI) {
+                            window.menuAPI.incrementStat('enemiesDefeated');
+                        }
+                        
                         enemies.splice(j, 1);
+                        
+                        // Actualizar HUD
+                        if (window.menuAPI) {
+                            window.menuAPI.updateHUD();
+                        }
                     }
                     break;
                 }
@@ -184,8 +234,22 @@ function update(deltaTime) {
             bullet.y += (dy / dist) * bullet.speed;
         }
     }
+    
+    // Actualizar tiempo jugado
+    if (gameStartTime) {
+        const elapsed = Math.floor((Date.now() - gameStartTime) / 1000);
+        const stats = window.menuAPI ? 
+            JSON.parse(localStorage.getItem('rogelioTD_stats') || '{}') : {};
+        stats.timePlayed = (stats.timePlayed || 0) + deltaTime / 1000;
+        if (window.menuAPI) {
+            localStorage.setItem('rogelioTD_stats', JSON.stringify(stats));
+        }
+    }
 }
 
+// ==========================================
+// DIBUJADO
+// ==========================================
 function draw() {
     // Limpiar canvas
     ctx.fillStyle = '#2d2d44';
@@ -256,74 +320,59 @@ function draw() {
     drawUI();
 }
 
+// ==========================================
+// INTERFAZ DE USUARIO
+// ==========================================
 function drawUI() {
     if (gameState === 'MENU') {
-        // Pantalla de menú
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-        ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-        
-        ctx.fillStyle = '#FFFFFF';
-        ctx.font = 'bold 48px Courier New';
-        ctx.textAlign = 'center';
-        ctx.fillText('TOWER DEFENSE', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 50);
-        
-        ctx.font = '24px Courier New';
-        ctx.fillText('Click para iniciar', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 20);
-        
-        ctx.font = '16px Courier New';
-        ctx.fillStyle = '#AAAAAA';
-        ctx.fillText('Coloca torres con click - Costo: $50', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 60);
+        // El menú principal se maneja por menu.js
+        // Esta sección ya no se usa porque el menú es HTML/CSS
     } else if (gameState === 'PLAYING') {
-        // HUD
-        ctx.fillStyle = '#1a1a2e';
-        ctx.fillRect(0, 0, CANVAS_WIDTH, 40);
-        
-        ctx.fillStyle = '#FFFFFF';
-        ctx.font = '16px Courier New';
-        ctx.textAlign = 'left';
-        ctx.fillText(`Vidas: ${player.lives}`, 20, 25);
-        
-        ctx.textAlign = 'center';
-        ctx.fillText(`Ola: ${player.wave}`, CANVAS_WIDTH / 2, 25);
-        
-        ctx.textAlign = 'right';
-        ctx.fillText(`Dinero: $${player.money}`, CANVAS_WIDTH - 20, 25);
+        // El HUD se maneja por menu.js
+        // Solo actualizamos los valores
+        if (window.menuAPI) {
+            window.menuAPI.updateHUD();
+        }
     } else if (gameState === 'GAMEOVER') {
         // Pantalla de Game Over
         ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
         ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
         
         ctx.fillStyle = '#F44336';
-        ctx.font = 'bold 48px Courier New';
+        ctx.font = 'bold 48px "Press Start 2P", Courier New';
         ctx.textAlign = 'center';
         ctx.fillText('GAME OVER', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 30);
         
         ctx.fillStyle = '#FFFFFF';
-        ctx.font = '24px Courier New';
+        ctx.font = '24px "Press Start 2P", Courier New';
         ctx.fillText(`Olas sobrevividas: ${player.wave}`, CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 20);
         
-        ctx.font = '16px Courier New';
+        ctx.font = '16px "Press Start 2P", Courier New';
         ctx.fillStyle = '#AAAAAA';
-        ctx.fillText('Click para reiniciar', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 60);
-        
-        // Permitir reiniciar
-        setTimeout(() => {
-            canvas.addEventListener('click', restartGame, {once: true});
-        }, 100);
+        ctx.fillText('Click para volver al menú', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 60);
     }
 }
 
-function restartGame() {
-    gameState = 'PLAYING';
+// ==========================================
+// REINICIAR DESPUÉS DE GAME OVER
+// ==========================================
+function restartGameAfterGameOver() {
+    if (window.menuAPI) {
+        window.menuAPI.showMainMenu();
+    }
+    
+    // Resetear variables
     player.money = 100;
     player.lives = 10;
     player.wave = 1;
     towers = [];
     enemies = [];
     bullets = [];
-    spawnEnemy();
 }
 
+// ==========================================
+// GAME LOOP PRINCIPAL
+// ==========================================
 function gameLoop(timestamp) {
     let deltaTime = timestamp - lastTime;
     lastTime = timestamp;
