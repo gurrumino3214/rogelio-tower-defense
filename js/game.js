@@ -16,6 +16,79 @@ let lastTime = 0;
 let gameSpeed = 1;
 let gameStartTime = 0;
 
+// ==========================================
+// SISTEMA DE CÁMARA
+// ==========================================
+let camera = {
+    x: 0,
+    y: 0,
+    zoom: 1,
+    width: 0,
+    height: 0
+};
+
+// Tamaño del mundo (más grande que el viewport)
+let worldWidth = 2048;
+let worldHeight = 1536;
+
+function initCamera() {
+    camera.width = canvas.width;
+    camera.height = canvas.height;
+    // Centrar cámara inicialmente
+    camera.x = (worldWidth - canvas.width) / 2;
+    camera.y = (worldHeight - canvas.height) / 2;
+}
+
+// Convertir coordenadas del mundo a coordenadas de pantalla
+function worldToScreen(worldX, worldY) {
+    return {
+        x: (worldX - camera.x) * camera.zoom,
+        y: (worldY - camera.y) * camera.zoom
+    };
+}
+
+// Convertir coordenadas de pantalla a coordenadas del mundo
+function screenToWorld(screenX, screenY) {
+    return {
+        x: (screenX / camera.zoom) + camera.x,
+        y: (screenY / camera.zoom) + camera.y
+    };
+}
+
+// Verificar si un objeto está dentro del viewport (frustum culling)
+function isInViewport(x, y, width, height) {
+    const padding = 100; // Margen extra para evitar parpadeo
+    return x + width > camera.x - padding &&
+           x < camera.x + camera.width + padding &&
+           y + height > camera.y - padding &&
+           y < camera.y + camera.height + padding;
+}
+
+// Decoraciones del mapa (posición fija en coordenadas del mundo)
+let decorations = [];
+
+function initDecorations() {
+    decorations = [];
+    const tileSize = 64;
+    
+    // Generar decoraciones aleatorias en el mundo
+    for (let i = 0; i < 150; i++) {
+        const type = ['tree', 'bush', 'rock', 'flower'][Math.floor(Math.random() * 4)];
+        const alt = Math.random() > 0.5 ? '_alt' : '';
+        decorations.push({
+            type: type + alt,
+            x: Math.random() * worldWidth,
+            y: Math.random() * worldHeight,
+            width: tileSize,
+            height: tileSize,
+            layer: Math.floor(Math.random() * 3) // Para ordenamiento Z
+        });
+    }
+    
+    // Ordenar decoraciones por capa y posición Y para efecto de profundidad
+    decorations.sort((a, b) => (a.layer - b.layer) || (a.y - b.y));
+}
+
 // Elementos del juego
 let player = {
     money: 100,
@@ -77,6 +150,7 @@ function resizeCanvas() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
     initPath();
+    initCamera(); // Actualizar cámara al redimensionar
     console.log('[GAME] Canvas redimensionado:', canvas.width, 'x', canvas.height);
 }
 
@@ -86,6 +160,8 @@ window.resizeCanvas = resizeCanvas;
 function startGame() {
     console.log('[GAME] Juego iniciado!');
     gameState = 'MENU';
+    initCamera(); // Inicializar cámara al iniciar el juego
+    initDecorations(); // Inicializar decoraciones
     requestAnimationFrame(gameLoop);
 }
 
@@ -463,22 +539,30 @@ function updateBossRogelio(deltaTime) {
 // DIBUJADO
 // ==========================================
 function draw() {
-    // Aplicar screen shake
+    // 1. Limpiar canvas completo
+    ctx.fillStyle = '#2d2d44';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // 2. Aplicar transformaciones de cámara y screen shake
     ctx.save();
+    
+    // Aplicar zoom de la cámara
+    ctx.scale(camera.zoom, camera.zoom);
+    
+    // Aplicar screen shake
     if (screenShakeIntensity > 0) {
         let shakeX = (Math.random() - 0.5) * screenShakeIntensity;
         let shakeY = (Math.random() - 0.5) * screenShakeIntensity;
         ctx.translate(shakeX, shakeY);
     }
     
-    // Limpiar canvas
-    ctx.fillStyle = '#2d2d44';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    // Trasladar por la posición de la cámara (esto hace que todo se mueva con la cámara)
+    ctx.translate(-camera.x, -camera.y);
     
-    // Dibujar fondo con tiles de terreno
+    // 3. Dibujar fondo con tiles de terreno (usando sistema de mundo)
     drawTerrainBackground();
     
-    // Dibujar camino
+    // 4. Dibujar camino (coordenadas del mundo)
     ctx.strokeStyle = '#555566';
     ctx.lineWidth = 40;
     ctx.lineCap = 'round';
@@ -490,12 +574,18 @@ function draw() {
     }
     ctx.stroke();
     
-    // Dibujar línea del camino más clara
+    // Línea del camino más clara
     ctx.strokeStyle = '#777788';
     ctx.lineWidth = 30;
     ctx.stroke();
     
-    // Dibujar torres con sprites
+    // 5. Dibujar decoraciones (árboles, rocas, arbustos, flores)
+    drawDecorations();
+    
+    // 6. Dibujar agua (si existe en el tilemap)
+    drawWater();
+    
+    // 7. Dibujar torres con sprites (coordenadas del mundo)
     for (let tower of towers) {
         // Rango (solo si está jugando)
         if (gameState === 'PLAYING') {
@@ -510,12 +600,17 @@ function draw() {
         drawTowerWithSprite(tower);
     }
     
-    // Dibujar enemigos con sprites
+    // 8. Dibujar enemigos con sprites (coordenadas del mundo)
     for (let enemy of enemies) {
         drawEnemyWithSprite(enemy);
     }
     
-    // Dibujar balas
+    // 9. Dibujar Boss Rogelio si está activo
+    if (bossRogelio && bossActive) {
+        drawBossRogelio();
+    }
+    
+    // 10. Dibujar balas/proyectiles (coordenadas del mundo)
     for (let bullet of bullets) {
         ctx.fillStyle = bullet.color;
         ctx.beginPath();
@@ -523,7 +618,27 @@ function draw() {
         ctx.fill();
     }
     
+    // 11. Dibujar efectos/partículas
+    drawParticles();
+    
+    // Restaurar contexto (salir de transformaciones de cámara)
     ctx.restore();
+    
+    // 12. Dibujar UI/HUD (siempre en coordenadas de pantalla, no afectado por cámara)
+    drawUI();
+    
+    // Dibujar texto de aparición de Rogelio (fuera del shake, en pantalla)
+    if (roglioAppearedAlpha > 0) {
+        ctx.save();
+        ctx.globalAlpha = roglioAppearedAlpha;
+        ctx.fillStyle = '#F44336';
+        ctx.font = 'bold 36px "Press Start 2P", cursive';
+        ctx.textAlign = 'center';
+        ctx.shadowColor = '#FF0000';
+        ctx.shadowBlur = 20;
+        ctx.fillText('¡¡ROGELIO HA APARECIDO!!', canvas.width / 2, canvas.height / 2);
+        ctx.restore();
+    }
 }
 
 // ==========================================
@@ -533,11 +648,18 @@ function drawTerrainBackground() {
     if (typeof SpriteManager === 'undefined') return;
     
     const tileSize = 64;
-    const cols = Math.ceil(canvas.width / tileSize) + 1;
-    const rows = Math.ceil(canvas.height / tileSize) + 1;
+    // Calcular columnas y filas basadas en el tamaño del mundo, no del canvas
+    const cols = Math.ceil(worldWidth / tileSize);
+    const rows = Math.ceil(worldHeight / tileSize);
     
-    for (let row = 0; row < rows; row++) {
-        for (let col = 0; col < cols; col++) {
+    // Optimización: solo dibujar tiles visibles en el viewport de la cámara
+    const startCol = Math.max(0, Math.floor(camera.x / tileSize) - 1);
+    const endCol = Math.min(cols, Math.ceil((camera.x + camera.width) / tileSize) + 1);
+    const startRow = Math.max(0, Math.floor(camera.y / tileSize) - 1);
+    const endRow = Math.min(rows, Math.ceil((camera.y + camera.height) / tileSize) + 1);
+    
+    for (let row = startRow; row < endRow; row++) {
+        for (let col = startCol; col < endCol; col++) {
             const x = col * tileSize;
             const y = row * tileSize;
             
@@ -693,6 +815,11 @@ function drawBossFallback(boss) {
 
 // Barra de vida del boss
 function drawBossHealthBar(boss) {
+    // Guardar estado actual del contexto
+    ctx.save();
+    // Resetear transformaciones para dibujar en coordenadas de pantalla (UI)
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    
     const barWidth = 400;
     const barHeight = 30;
     const barX = (canvas.width - barWidth) / 2;
@@ -731,33 +858,82 @@ function drawBossHealthBar(boss) {
     ctx.font = '14px "Press Start 2P", cursive';
     ctx.textAlign = 'right';
     ctx.fillText(`${Math.round(healthPercent * 100)}%`, barX + barWidth - 5, barY + 25);
+    
+    ctx.restore();
 }
 
-    // Dibujar balas
-    for (let bullet of bullets) {
-        ctx.fillStyle = bullet.color;
-        ctx.beginPath();
-        ctx.arc(bullet.x, bullet.y, 5, 0, Math.PI * 2);
-        ctx.fill();
+// ==========================================
+// DIBUJADO DE DECORACIONES
+// ==========================================
+function drawDecorations() {
+    if (typeof SpriteManager === 'undefined') return;
+    
+    for (let deco of decorations) {
+        // Solo dibujar si está en el viewport
+        if (!isInViewport(deco.x, deco.y, deco.width, deco.height)) continue;
+        
+        const spriteKey = `decorations/${deco.type}`;
+        const sprite = SpriteManager.getSprite(spriteKey);
+        
+        if (sprite) {
+            ctx.imageSmoothingEnabled = false;
+            ctx.drawImage(sprite, deco.x, deco.y, deco.width, deco.height);
+            ctx.imageSmoothingEnabled = true;
+        } else {
+            // Fallback: dibujar rectángulo de color según tipo
+            let color = '#888888';
+            if (deco.type.includes('tree')) color = '#2E7D32';
+            else if (deco.type.includes('bush')) color = '#4CAF50';
+            else if (deco.type.includes('rock')) color = '#757575';
+            else if (deco.type.includes('flower')) color = '#E91E63';
+            
+            ctx.fillStyle = color;
+            ctx.fillRect(deco.x, deco.y, deco.width, deco.height);
+        }
     }
+}
+
+// ==========================================
+// DIBUJADO DE AGUA
+// ==========================================
+function drawWater() {
+    // Función placeholder para agua - se puede expandir con tiles de agua
+    if (typeof SpriteManager === 'undefined') return;
     
-    // Dibujar UI
-    drawUI();
+    // Ejemplo: dibujar algunos tiles de agua en posiciones fijas
+    const tileSize = 64;
+    const waterPositions = [
+        {x: 100, y: 100}, {x: 164, y: 100}, {x: 100, y: 164}, {x: 164, y: 164}
+    ];
     
-    // Restaurar contexto después de screen shake
-    ctx.restore();
-    
-    // Dibujar texto de aparición de Rogelio (fuera del shake)
-    if (roglioAppearedAlpha > 0) {
-        ctx.save();
-        ctx.globalAlpha = roglioAppearedAlpha;
-        ctx.fillStyle = '#F44336';
-        ctx.font = 'bold 36px "Press Start 2P", cursive';
-        ctx.textAlign = 'center';
-        ctx.shadowColor = '#FF0000';
-        ctx.shadowBlur = 20;
-        ctx.fillText('¡¡ROGELIO HA APARECIDO!!', canvas.width / 2, canvas.height / 2);
-        ctx.restore();
+    for (let pos of waterPositions) {
+        if (!isInViewport(pos.x, pos.y, tileSize, tileSize)) continue;
+        
+        const spriteKey = 'tiles/water';
+        const sprite = SpriteManager.getSprite(spriteKey);
+        
+        if (sprite) {
+            ctx.imageSmoothingEnabled = false;
+            ctx.drawImage(sprite, pos.x, pos.y, tileSize, tileSize);
+            ctx.imageSmoothingEnabled = true;
+        }
+    }
+}
+
+// ==========================================
+// DIBUJADO DE PARTÍCULAS/EFEECTOS
+// ==========================================
+function drawParticles() {
+    // Función placeholder para partículas - se puede expandir
+    for (let particle of particles) {
+        if (!isInViewport(particle.x, particle.y, particle.size || 5, particle.size || 5)) continue;
+        
+        ctx.fillStyle = particle.color || '#FFFFFF';
+        ctx.globalAlpha = particle.alpha || 1;
+        ctx.beginPath();
+        ctx.arc(particle.x, particle.y, particle.size || 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
     }
 }
 
@@ -818,6 +994,10 @@ function restartGameAfterGameOver() {
     screenShakeIntensity = 0;
     roglioAppearedText = '';
     roglioAppearedAlpha = 0;
+    
+    // Reinicializar decoraciones y cámara
+    initDecorations();
+    initCamera();
 }
 
 // ==========================================
