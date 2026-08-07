@@ -308,9 +308,6 @@ function spawnBossRogelio() {
 function update(deltaTime) {
     if (gameState !== 'PLAYING') return;
     
-    // Actualizar efectos y partículas
-    updateEffects(deltaTime);
-    
     // Actualizar screen shake
     if (screenShakeIntensity > 0) {
         screenShakeIntensity *= 0.9;
@@ -408,20 +405,8 @@ function update(deltaTime) {
                 if (edist < 30) {
                     enemy.health -= bullet.damage;
                     
-                    // Efecto de impacto visual
-                    if (typeof ParticleSystem !== 'undefined') {
-                        ParticleSystem.emitHit(bullet.targetX, bullet.targetY, '#FFFFFF');
-                        ParticleSystem.emitSparks(bullet.targetX, bullet.targetY, 5, '#FFD700');
-                    }
-                    
                     if (enemy.health <= 0) {
                         player.money += enemy.reward;
-                        
-                        // Efectos de muerte del enemigo
-                        if (typeof ParticleSystem !== 'undefined') {
-                            ParticleSystem.emitExplosion(enemy.x, enemy.y, 15, enemy.color);
-                            ParticleSystem.emitDust(enemy.x, enemy.y, 8);
-                        }
                         
                         // Actualizar estadísticas
                         if (window.menuAPI) {
@@ -649,9 +634,6 @@ function draw() {
         ctx.fill();
     }
     
-    // 11. Dibujar efectos/partículas
-    drawParticles();
-    
     // Restaurar contexto (salir de transformaciones de cámara)
     ctx.restore();
     
@@ -737,47 +719,11 @@ function drawBossRogelio() {
     if (!bossRogelio) return;
     
     const boss = bossRogelio;
-    const now = Date.now();
     
-    // Screen shake effect para Rogelio
-    let shakeX = (Math.random() - 0.5) * screenShakeIntensity * 0.5;
-    let shakeY = (Math.random() - 0.5) * screenShakeIntensity * 0.5;
-    
-    // Diseño simple: dibujar boss como círculo rojo grande con aura
-    // Dibujar aura roja pulsante alrededor de Rogelio
-    ctx.save();
-    const auraRadius = 70 + Math.sin(now / 200) * 10;
-    const auraGradient = ctx.createRadialGradient(
-        boss.x + shakeX, boss.y + shakeY, 40,
-        boss.x + shakeX, boss.y + shakeY, auraRadius
-    );
-    auraGradient.addColorStop(0, 'rgba(244, 67, 54, 0.3)');
-    auraGradient.addColorStop(0.5, 'rgba(244, 67, 54, 0.15)');
-    auraGradient.addColorStop(1, 'transparent');
-    ctx.fillStyle = auraGradient;
-    ctx.beginPath();
-    ctx.arc(boss.x + shakeX, boss.y + shakeY, auraRadius, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-    
-    // Cuerpo principal del boss
+    // Diseño simple: dibujar boss como círculo rojo grande
     ctx.fillStyle = '#F44336';
     ctx.beginPath();
-    ctx.arc(boss.x + shakeX, boss.y + shakeY, 50, 0, Math.PI * 2);
-    ctx.fill();
-    
-    // Aura roja brillante
-    ctx.strokeStyle = 'rgba(244, 67, 54, 0.5)';
-    ctx.lineWidth = 5;
-    ctx.beginPath();
-    ctx.arc(boss.x + shakeX, boss.y + shakeY, 60 + Math.sin(Date.now() / 200) * 5, 0, Math.PI * 2);
-    ctx.stroke();
-    
-    // Ojos brillantes
-    ctx.fillStyle = '#FFEB3B';
-    ctx.beginPath();
-    ctx.arc(boss.x - 15 + shakeX, boss.y - 10 + shakeY, 8, 0, Math.PI * 2);
-    ctx.arc(boss.x + 15 + shakeX, boss.y - 10 + shakeY, 8, 0, Math.PI * 2);
+    ctx.arc(boss.x, boss.y, 50, 0, Math.PI * 2);
     ctx.fill();
     
     // Barra de vida del boss (si es visible)
@@ -820,43 +766,22 @@ function drawBossHealthBar(boss) {
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     
     const barWidth = 400;
-    const barHeight = 30;
+    const barHeight = 20;
     const barX = (canvas.width - barWidth) / 2;
     const barY = 80;
     
     // Fondo oscuro
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-    ctx.fillRect(barX - 5, barY - 25, barWidth + 10, barHeight + 30);
-    
-    // Borde dorado
-    ctx.strokeStyle = '#FFD700';
-    ctx.lineWidth = 3;
-    ctx.strokeRect(barX - 5, barY - 25, barWidth + 10, barHeight + 30);
-    
-    // Nombre
-    ctx.fillStyle = '#FFD700';
-    ctx.font = 'bold 20px Arial, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('ROGELIO', canvas.width / 2, barY - 5);
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+    ctx.fillRect(barX - 3, barY - 3, barWidth + 6, barHeight + 6);
     
     // Barra de vida fondo
     ctx.fillStyle = '#333333';
-    ctx.fillRect(barX, barY + 5, barWidth, barHeight);
+    ctx.fillRect(barX, barY, barWidth, barHeight);
     
     // Vida actual
     const healthPercent = boss.health / boss.maxHealth;
-    let gradient = ctx.createLinearGradient(barX, barY, barX + barWidth, barY);
-    gradient.addColorStop(0, '#F44336');
-    gradient.addColorStop(0.5, '#FF9800');
-    gradient.addColorStop(1, '#F44336');
-    ctx.fillStyle = gradient;
-    ctx.fillRect(barX, barY + 5, barWidth * healthPercent, barHeight);
-    
-    // Porcentaje
-    ctx.fillStyle = '#FFFFFF';
-    ctx.font = '14px Arial, sans-serif';
-    ctx.textAlign = 'right';
-    ctx.fillText(`${Math.round(healthPercent * 100)}%`, barX + barWidth - 5, barY + 25);
+    ctx.fillStyle = '#F44336';
+    ctx.fillRect(barX, barY, barWidth * healthPercent, barHeight);
     
     ctx.restore();
 }
@@ -904,17 +829,7 @@ function drawWater() {
 // DIBUJADO DE PARTÍCULAS/EFEECTOS
 // ==========================================
 function drawParticles() {
-    // Diseño simple: dibujar partículas básicas como círculos
-    for (let particle of particles) {
-        if (!isInViewport(particle.x, particle.y, particle.size || 5, particle.size || 5)) continue;
-        
-        ctx.fillStyle = particle.color || '#FFFFFF';
-        ctx.globalAlpha = particle.alpha || 1;
-        ctx.beginPath();
-        ctx.arc(particle.x, particle.y, particle.size || 3, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.globalAlpha = 1;
-    }
+    // Diseño simple: sin partículas
 }
 
 // ==========================================
