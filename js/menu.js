@@ -12,6 +12,7 @@
 let menuElements = {};
 let audioContext = null;
 let isMuted = false;
+let gameState = 'MENU'; // MENU, PLAYING, PAUSED, GAMEOVER, VICTORY
 
 // ==========================================
 // INICIALIZACIÓN DEL MENÚ
@@ -726,8 +727,8 @@ function startGameFromMenu() {
         // Actualizar HUD
         updateHUD();
 
-        // Iniciar primera oleada usando waveManager
-        waveManager.startWave(player.wave);
+        // Iniciar primera oleada usando WaveManager
+        WaveManager.startWave(player.wave);
         
         console.log('[MENU] Juego iniciado - Canvas:', gameCanvas ? 'visible' : 'no encontrado');
     });

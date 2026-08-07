@@ -5,7 +5,7 @@
 
 // Configuración del juego
 let canvas, ctx;
-let gameState = 'MENU'; // MENU, PLAYING, PAUSED, GAMEOVER, VICTORY
+// gameState se define en menu.js para compartir entre archivos
 let lastTime = 0;
 let gameSpeed = 1;
 let gameStartTime = 0;
@@ -144,6 +144,7 @@ let player = {
 let towers = [];
 let enemies = [];
 let bullets = [];
+let particles = []; // Declarar particles para evitar errores
 
 // Sistema de boss Rogelio
 let bossRogelio = null;
