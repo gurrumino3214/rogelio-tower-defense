@@ -63,6 +63,7 @@ body {
     width: 100vw;
     height: 100vh;
     overflow: hidden;
+    z-index: 10;
 }
 
 canvas {
@@ -71,6 +72,8 @@ canvas {
     height: 100%;
     background-color: var(--color-dark-gray);
     cursor: crosshair;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
 }
 
 /* ==========================================
@@ -88,8 +91,13 @@ canvas {
         var(--color-dark-gray) 50%,
         var(--color-purple) 100%
     );
-    z-index: 1;
+    z-index: 5;
     overflow: hidden;
+}
+
+/* Ocultar fondo del menú cuando se está jugando */
+#menuBackground.hidden {
+    display: none !important;
 }
 
 .menu-fog {
@@ -189,6 +197,11 @@ canvas {
     z-index: 100;
     background: rgba(10, 10, 15, 0.85);
     backdrop-filter: blur(5px);
+}
+
+/* Ocultar menú principal cuando se está jugando */
+#mainMenu.hidden {
+    display: none !important;
 }
 
 .menu-title {
@@ -605,7 +618,7 @@ select:focus {
     width: 100%;
     height: 100%;
     pointer-events: none;
-    z-index: 50;
+    z-index: 20;
     display: none;
 }
 

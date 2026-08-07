@@ -77,7 +77,11 @@ function resizeCanvas() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
     initPath();
+    console.log('[GAME] Canvas redimensionado:', canvas.width, 'x', canvas.height);
 }
+
+// Hacer resizeCanvas disponible globalmente para menu.js
+window.resizeCanvas = resizeCanvas;
 
 function startGame() {
     console.log('[GAME] Juego iniciado!');
