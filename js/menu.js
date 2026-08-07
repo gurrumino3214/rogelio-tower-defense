@@ -666,14 +666,30 @@ function startGameFromMenu() {
     fadeTransition(() => {
         initAudio();
         menuElements.mainMenu.style.display = 'none';
+        menuElements.background.style.display = 'none';
         menuElements.gameUI.classList.add('active');
         gameState = 'PLAYING';
+        
+        // Resetear variables del juego
+        player.money = 100;
+        player.lives = 10;
+        player.wave = 1;
+        towers = [];
+        enemies = [];
+        bullets = [];
+        particles = [];
         
         // Incrementar partidas jugadas
         incrementStat('gamesPlayed');
         
         // Iniciar temporizador de juego
         gameStartTime = Date.now();
+        
+        // Actualizar HUD
+        updateHUD();
+        
+        // Spawnear primer enemigo
+        spawnEnemy();
     });
 }
 
@@ -728,6 +744,7 @@ function showMainMenu() {
         menuElements.pauseMenu.classList.remove('active');
         menuElements.gameUI.classList.remove('active');
         menuElements.mainMenu.style.display = 'flex';
+        menuElements.background.style.display = 'block';
         
         // Resetear juego
         player.money = 100;

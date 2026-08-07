@@ -6,8 +6,8 @@
 // ==========================================
 
 // Configuración del juego
-const CANVAS_WIDTH = 800;
-const CANVAS_HEIGHT = 600;
+// const CANVAS_WIDTH = 800; // Ya no se usa, el canvas es dinámico
+// const CANVAS_HEIGHT = 600; // Ya no se usa, el canvas es dinámico
 
 // Variables globales
 let canvas, ctx;
@@ -37,26 +37,34 @@ let screenShakeIntensity = 0;
 let roglioAppearedText = '';
 let roglioAppearedAlpha = 0;
 
-// Camino (waypoints)
-const path = [
-    {x: 0, y: 100},
-    {x: 200, y: 100},
-    {x: 200, y: 400},
-    {x: 500, y: 400},
-    {x: 500, y: 200},
-    {x: 700, y: 200},
-    {x: 700, y: 500},
-    {x: 800, y: 500}
-];
+// Camino (waypoints) - Se ajusta dinámicamente al tamaño del canvas
+let path = [];
+
+function initPath() {
+    const w = canvas.width;
+    const h = canvas.height;
+    path = [
+        {x: 0, y: h * 0.17},
+        {x: w * 0.25, y: h * 0.17},
+        {x: w * 0.25, y: h * 0.67},
+        {x: w * 0.625, y: h * 0.67},
+        {x: w * 0.625, y: h * 0.33},
+        {x: w * 0.875, y: h * 0.33},
+        {x: w * 0.875, y: h * 0.83},
+        {x: w, y: h * 0.83}
+    ];
+}
 
 // ==========================================
 // INICIALIZACIÓN
 // ==========================================
 window.onload = function() {
     canvas = document.getElementById('gameCanvas');
-    canvas.width = CANVAS_WIDTH;
-    canvas.height = CANVAS_HEIGHT;
     ctx = canvas.getContext('2d');
+    
+    // Ajustar canvas al tamaño de la ventana
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
     
     // Event listeners
     canvas.addEventListener('click', handleClick);
@@ -64,6 +72,12 @@ window.onload = function() {
     // Iniciar el juego (se queda en MENU hasta que se presione Jugar)
     startGame();
 };
+
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    initPath();
+}
 
 function startGame() {
     console.log('[GAME] Juego iniciado!');
@@ -455,7 +469,7 @@ function draw() {
     
     // Limpiar canvas
     ctx.fillStyle = '#2d2d44';
-    ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
     
     // Dibujar camino
     ctx.strokeStyle = '#555566';
@@ -584,7 +598,7 @@ function drawBossFallback(boss) {
 function drawBossHealthBar(boss) {
     const barWidth = 400;
     const barHeight = 30;
-    const barX = (CANVAS_WIDTH - barWidth) / 2;
+    const barX = (canvas.width - barWidth) / 2;
     const barY = 80;
     
     // Fondo oscuro
@@ -600,7 +614,7 @@ function drawBossHealthBar(boss) {
     ctx.fillStyle = '#FFD700';
     ctx.font = 'bold 20px "Press Start 2P", cursive';
     ctx.textAlign = 'center';
-    ctx.fillText('ROGELIO', CANVAS_WIDTH / 2, barY - 5);
+    ctx.fillText('ROGELIO', canvas.width / 2, barY - 5);
     
     // Barra de vida fondo
     ctx.fillStyle = '#333333';
@@ -645,7 +659,7 @@ function drawBossHealthBar(boss) {
         ctx.textAlign = 'center';
         ctx.shadowColor = '#FF0000';
         ctx.shadowBlur = 20;
-        ctx.fillText('¡¡ROGELIO HA APARECIDO!!', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2);
+        ctx.fillText('¡¡ROGELIO HA APARECIDO!!', canvas.width / 2, canvas.height / 2);
         ctx.restore();
     }
 }
@@ -666,20 +680,20 @@ function drawUI() {
     } else if (gameState === 'GAMEOVER') {
         // Pantalla de Game Over
         ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-        ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
         
         ctx.fillStyle = '#F44336';
         ctx.font = 'bold 48px "Press Start 2P", Courier New';
         ctx.textAlign = 'center';
-        ctx.fillText('GAME OVER', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 30);
+        ctx.fillText('GAME OVER', canvas.width / 2, canvas.height / 2 - 30);
         
         ctx.fillStyle = '#FFFFFF';
         ctx.font = '24px "Press Start 2P", Courier New';
-        ctx.fillText(`Olas sobrevividas: ${player.wave}`, CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 20);
+        ctx.fillText(`Olas sobrevividas: ${player.wave}`, canvas.width / 2, canvas.height / 2 + 20);
         
         ctx.font = '16px "Press Start 2P", Courier New';
         ctx.fillStyle = '#AAAAAA';
-        ctx.fillText('Click para volver al menú', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 60);
+        ctx.fillText('Click para volver al menú', canvas.width / 2, canvas.height / 2 + 60);
     }
 }
 
