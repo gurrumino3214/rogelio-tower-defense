@@ -9,25 +9,33 @@ const SpriteManager = {
     // Almacén de imágenes cargadas
     images: {},
     
+    // Texture Atlas para optimización
+    textureAtlas: null,
+    
     // Configuración de animaciones
     animations: {
-        // Torres
+        // Torres - Animaciones completas
         archer: { idle: 'frame', attack: 'attack', frames: 8, speed: 100 },
         mage: { idle: 'frame', attack: 'attack', frames: 8, speed: 120 },
         cannon: { idle: 'frame', attack: 'attack', frames: 8, speed: 150 },
         
-        // Enemigos
-        goblin: { walk: 'walk', attack: 'attack', frames: 8, speed: 100 },
-        bandit: { walk: 'walk', attack: 'attack', frames: 8, speed: 90 },
-        skeleton: { walk: 'walk', attack: 'attack', frames: 8, speed: 80 },
-        dark_knight: { walk: 'walk', attack: 'attack', frames: 8, speed: 70 },
-        skeleton_lord: { walk: 'walk', attack: 'attack', frames: 8, speed: 60 },
+        // Enemigos - Animaciones completas con hit y death
+        goblin: { walk: 'walk', attack: 'attack', hit: 'hit', death: 'death', frames: 8, speed: 100 },
+        bandit: { walk: 'walk', attack: 'attack', hit: 'hit', death: 'death', frames: 8, speed: 90 },
+        skeleton: { walk: 'walk', attack: 'attack', hit: 'hit', death: 'death', frames: 8, speed: 80 },
+        dark_knight: { walk: 'walk', attack: 'attack', hit: 'hit', death: 'death', frames: 8, speed: 70 },
+        skeleton_lord: { walk: 'walk', attack: 'attack', hit: 'hit', death: 'death', frames: 8, speed: 60 },
         
-        // Boss Rogelio
+        // Boss Rogelio - Animaciones épicas completas
         rogelio: { 
             walk: 'walk', 
             attack: 'attack', 
             roar: 'roar',
+            hit: 'hit',
+            death: 'death',
+            special: 'special',
+            enraged: 'enraged',
+            spawn: 'spawn',
             frames: 8, 
             speed: 120,
             roarSpeed: 150
@@ -39,6 +47,12 @@ const SpriteManager = {
     
     // Contadores de frames
     frameCounters: {},
+    
+    // Cache de sprites para rendimiento
+    spriteCache: {},
+    
+    // Spritesheets precargados
+    spritesheets: {},
     
     /**
      * Precarga todos los sprites
