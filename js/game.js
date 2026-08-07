@@ -256,7 +256,22 @@ const Game = {
  * ========================================
  */
 window.onload = function() {
-    // El engine se inicializa automáticamente en engine.js
-    // Game.init() se llama cuando el jugador inicia una partida
-    console.log('Dark Pixel Art Tower Defense - Loaded');
+    // Inicializar el engine
+    if (typeof Engine !== 'undefined') {
+        Engine.init();
+        Engine.start();
+        console.log('Engine started');
+    }
+    
+    // Inicializar UI
+    if (typeof UI !== 'undefined') {
+        UI.init();
+    }
+    
+    // Inicializar juego y mostrar menú
+    if (typeof Game !== 'undefined') {
+        Game.init();
+    }
+    
+    console.log('Dark Pixel Art Tower Defense - Ready');
 };

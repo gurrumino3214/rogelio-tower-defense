@@ -329,6 +329,38 @@ class HUDScreen extends UIScreen {
             this.towerInfoPanel.hide();
         }
     }
+
+    showDamageFlash() {
+        // Efecto visual de daño (flash rojo en pantalla)
+        this.damageFlashTime = 500; // 500ms de flash
+    }
+
+    showWaveNotification(wave) {
+        this.addNotification(`¡OLEADA ${wave}!`, '#2e4a8b', 3000);
+    }
+
+    showTowerDetails(tower) {
+        this.setSelectedTower(tower);
+    }
+
+    hideTowerDetails() {
+        this.setSelectedTower(null);
+    }
+
+    showPlacementPreview(towerType) {
+        this.selectTowerToBuild({
+            name: towerType.name || 'TORRE',
+            price: towerType.cost || 0
+        });
+    }
+
+    hidePlacementPreview() {
+        this.selectedTower = null;
+    }
+
+    showGameOver(score) {
+        this.addNotification(`GAME OVER - PUNTOS: ${score}`, '#8b2e2e', 5000);
+    }
 }
 
 // Exportar
