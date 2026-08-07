@@ -76,7 +76,7 @@ const SpriteManager = {
         const promises = [];
         
         towerTypes.forEach(type => {
-            // Frames idle
+            // Frames idle - verificar cuántos existen
             for (let i = 0; i < 8; i++) {
                 promises.push(this.loadImage(`towers/${type}_frame_${i}`, `assets/towers/${type}_frame_${i}.png`));
             }
@@ -93,7 +93,8 @@ const SpriteManager = {
      * Carga sprites de enemigos
      */
     loadEnemySprites: function() {
-        const enemyTypes = ['goblin', 'bandit', 'skeleton', 'dark_knight', 'skeleton_lord'];
+        // Solo cargar tipos que existen
+        const enemyTypes = ['goblin', 'bandit', 'skeleton'];
         const promises = [];
         
         enemyTypes.forEach(type => {

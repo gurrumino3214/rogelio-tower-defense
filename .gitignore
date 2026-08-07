@@ -1,11 +1,1 @@
-```
-# Temporary spritesheet file
-spritesheet_temp.png
-
-# Generated assets from spritesheet processing
-assets_from_spritesheet/
-assets_extracted/samples/
-
-# JSON analysis output
-assets/spritesheet_analysis.json
-```
+(js/sprites.js is a source code file, and there are no build artifacts, dependencies, or temporary files in the changes)
