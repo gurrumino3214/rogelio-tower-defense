@@ -122,7 +122,7 @@ class UIManager {
     renderCursor() {
         // Cursor personalizado pixel art
         const size = 20;
-        ctx.fillStyle = '#d0d0d5';
+        this.ctx.fillStyle = '#d0d0d5';
         
         if (this.cursorType === 'pointer') {
             // Cursor de mano

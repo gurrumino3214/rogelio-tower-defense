@@ -50,7 +50,13 @@ const Engine = {
     },
 
     // Sistema de capas (layers)
-    layers: {},
+    layers: {
+        BACKGROUND: 'background',
+        GROUND: 'ground',
+        ENTITIES: 'entities',
+        EFFECTS: 'effects',
+        UI: 'ui'
+    },
     layerOrder: [],
 
     // Sistema de entidades
