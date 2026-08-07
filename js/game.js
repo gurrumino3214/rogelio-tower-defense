@@ -53,9 +53,9 @@ const WaveManager = {
     
     update: function(deltaTime) {
         if (!this.active) return false;
-        
-        // Spawnear enemigos normales
-        if (this.spawned < this.total && !this.bossWave && !this.miniBossWave) {
+
+        // Spawnear enemigos normales primero (incluyendo oleadas con boss)
+        if (this.spawned < this.total && !this.bossSpawned) {
             this.spawnTimer += deltaTime * gameSpeed;
             if (this.spawnTimer >= this.spawnInterval) {
                 this.spawnTimer = 0;
@@ -67,12 +67,17 @@ const WaveManager = {
             this.spawnBoss();
             this.bossSpawned = true;
         }
-        
+
         // Contar enemigos vivos
         this.alive = enemies.length + (bossRogelio && bossActive ? 1 : 0);
-        
+
         // Verificar si la oleada terminó
-        if (this.spawned >= this.total && this.alive <= 0 && (!this.bossWave || this.bossDefeated)) {
+        if (this.spawned >= this.total && this.bossSpawned && this.alive <= 0 && (!this.bossWave || this.bossDefeated)) {
+            this.active = false;
+            this.completeWave();
+            return true;
+        } else if (!this.bossWave && !this.miniBossWave && this.spawned >= this.total && this.alive <= 0) {
+            // Oleada normal sin boss
             this.active = false;
             this.completeWave();
             return true;
