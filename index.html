@@ -55,35 +55,16 @@
     <script src="js/game.js"></script>
     
     <script>
-        // Esperar a que cargue todo el contenido incluyendo sprites
+        // Esperar a que cargue todo el contenido
         window.addEventListener('load', async function() {
-            // Inicializar sistema de partículas
-            if (typeof ParticleSystem !== 'undefined') {
-                ParticleSystem.init();
-                console.log('[LOAD] Sistema de partículas inicializado');
-            }
-            
-            // Inicializar sistema de efectos visuales
-            if (typeof VisualEffects !== 'undefined') {
-                VisualEffects.init();
-                console.log('[LOAD] Sistema de efectos visuales inicializado');
-            }
-            
-            // Precargar sprites antes de mostrar el juego
-            if (typeof SpriteManager !== 'undefined') {
-                console.log('[LOAD] Precargando sprites...');
-                await SpriteManager.preloadAll();
-                console.log('[LOAD] Sprites precargados!');
-            }
-            
-            // Ocultar pantalla de carga
+            // Ocultar pantalla de carga después de un breve retraso
             setTimeout(() => {
                 const loadingScreen = document.getElementById('loadingScreen');
                 loadingScreen.style.opacity = '0';
                 setTimeout(() => {
                     loadingScreen.style.display = 'none';
                 }, 500);
-            }, 1500);
+            }, 1000);
             
             // Inicializar menú
             if (typeof initMenu === 'function') {

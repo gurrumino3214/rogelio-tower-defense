@@ -663,7 +663,7 @@ function draw() {
         ctx.save();
         ctx.globalAlpha = roglioAppearedAlpha;
         ctx.fillStyle = '#F44336';
-        ctx.font = 'bold 36px "Press Start 2P", cursive';
+        ctx.font = 'bold 36px Arial, sans-serif';
         ctx.textAlign = 'center';
         ctx.shadowColor = '#FF0000';
         ctx.shadowBlur = 20;
@@ -676,10 +676,8 @@ function draw() {
 // DIBUJADO DE TERRENO DE FONDO
 // ==========================================
 function drawTerrainBackground() {
-    if (typeof SpriteManager === 'undefined') return;
-    
+    // Diseño simple: fondo de color sólido sin texturas
     const tileSize = 64;
-    // Calcular columnas y filas basadas en el tamaño del mundo, no del canvas
     const cols = Math.ceil(worldWidth / tileSize);
     const rows = Math.ceil(worldHeight / tileSize);
     
@@ -694,20 +692,10 @@ function drawTerrainBackground() {
             const x = col * tileSize;
             const y = row * tileSize;
             
-            // Alternar entre grass y grass_alt para variedad
+            // Alternar entre dos tonos de verde para variedad visual simple
             const isAlt = (row + col) % 2 === 0;
-            const spriteKey = `tiles/${isAlt ? 'grass' : 'grass_alt'}`;
-            const sprite = SpriteManager.getSprite(spriteKey);
-            
-            if (sprite) {
-                ctx.imageSmoothingEnabled = false;
-                ctx.drawImage(sprite, x, y, tileSize, tileSize);
-                ctx.imageSmoothingEnabled = true;
-            } else {
-                // Fallback: dibujar rectángulo verde
-                ctx.fillStyle = isAlt ? '#388E3C' : '#4CAF50';
-                ctx.fillRect(x, y, tileSize, tileSize);
-            }
+            ctx.fillStyle = isAlt ? '#388E3C' : '#4CAF50';
+            ctx.fillRect(x, y, tileSize, tileSize);
         }
     }
 }
@@ -716,21 +704,7 @@ function drawTerrainBackground() {
 // DIBUJADO DE TORRES CON SPRITES
 // ==========================================
 function drawTowerWithSprite(tower) {
-    if (typeof SpriteManager !== 'undefined') {
-        // Usar sprite de archer por defecto
-        const animFrame = Math.floor((Date.now() / 100) % 8);
-        const spriteKey = `towers/archer_frame_${animFrame}`;
-        const sprite = SpriteManager.getSprite(spriteKey);
-        
-        if (sprite) {
-            ctx.imageSmoothingEnabled = false;
-            ctx.drawImage(sprite, tower.x - 20, tower.y - 20, 40, 40);
-            ctx.imageSmoothingEnabled = true;
-            return;
-        }
-    }
-    
-    // Fallback: dibujar rectángulo verde
+    // Diseño simple: dibujar torre como rectángulo de color
     ctx.fillStyle = tower.color;
     ctx.fillRect(tower.x - 20, tower.y - 20, 40, 40);
     ctx.fillStyle = '#2E7D32';
@@ -741,30 +715,11 @@ function drawTowerWithSprite(tower) {
 // DIBUJADO DE ENEMIGOS CON SPRITES
 // ==========================================
 function drawEnemyWithSprite(enemy) {
-    if (typeof SpriteManager !== 'undefined') {
-        // Determinar sprite según tipo de enemigo
-        const animFrame = Math.floor((Date.now() / 100) % 8);
-        const spriteKey = `enemies/${enemy.type}_walk_${animFrame}`;
-        const sprite = SpriteManager.getSprite(spriteKey);
-        
-        if (sprite) {
-            ctx.imageSmoothingEnabled = false;
-            ctx.drawImage(sprite, enemy.x - 15, enemy.y - 15, 30, 30);
-            ctx.imageSmoothingEnabled = true;
-        } else {
-            // Fallback: dibujar círculo de color
-            ctx.fillStyle = enemy.color;
-            ctx.beginPath();
-            ctx.arc(enemy.x, enemy.y, 15, 0, Math.PI * 2);
-            ctx.fill();
-        }
-    } else {
-        // Fallback si SpriteManager no está disponible
-        ctx.fillStyle = enemy.color;
-        ctx.beginPath();
-        ctx.arc(enemy.x, enemy.y, 15, 0, Math.PI * 2);
-        ctx.fill();
-    }
+    // Diseño simple: dibujar enemigo como círculo de color
+    ctx.fillStyle = enemy.color;
+    ctx.beginPath();
+    ctx.arc(enemy.x, enemy.y, 15, 0, Math.PI * 2);
+    ctx.fill();
     
     // Barra de vida (siempre visible)
     let healthPercent = enemy.health / enemy.maxHealth;
@@ -784,20 +739,11 @@ function drawBossRogelio() {
     const boss = bossRogelio;
     const now = Date.now();
     
-    // Determinar frame de animación según estado
-    let animFrame = Math.floor((now / 100) % 8);
-    let spriteKey = `boss/rogelio_walk_${animFrame}`;
-    
-    if (boss.state === 'attacking') {
-        spriteKey = `boss/rogelio_attack_${Math.floor((now / 80) % 8)}`;
-    } else if (boss.state === 'roaring') {
-        spriteKey = `boss/rogelio_roar_${Math.floor((now / 150) % 6)}`;
-    }
-    
     // Screen shake effect para Rogelio
     let shakeX = (Math.random() - 0.5) * screenShakeIntensity * 0.5;
     let shakeY = (Math.random() - 0.5) * screenShakeIntensity * 0.5;
     
+    // Diseño simple: dibujar boss como círculo rojo grande con aura
     // Dibujar aura roja pulsante alrededor de Rogelio
     ctx.save();
     const auraRadius = 70 + Math.sin(now / 200) * 10;
@@ -814,31 +760,25 @@ function drawBossRogelio() {
     ctx.fill();
     ctx.restore();
     
-    // Obtener sprite o usar fallback
-    if (typeof SpriteManager !== 'undefined') {
-        const sprite = SpriteManager.getSprite(spriteKey);
-        if (sprite) {
-            ctx.imageSmoothingEnabled = false;
-            // Brillo adicional cuando está enraged
-            if (boss.health < boss.maxHealth * 0.3) {
-                ctx.shadowBlur = 20;
-                ctx.shadowColor = '#FF0000';
-            }
-            ctx.drawImage(sprite, boss.x - 64 + shakeX, boss.y - 64 + shakeY, 128, 128);
-            ctx.shadowBlur = 0;
-            ctx.imageSmoothingEnabled = true;
-            
-            // Emitir partículas del aura
-            if (typeof ParticleSystem !== 'undefined' && Math.random() > 0.7) {
-                ParticleSystem.emitAura(boss.x, boss.y, 60, '#F44336');
-            }
-        } else {
-            // Fallback: dibujar rectángulo rojo grande
-            drawBossFallback(boss);
-        }
-    } else {
-        drawBossFallback(boss);
-    }
+    // Cuerpo principal del boss
+    ctx.fillStyle = '#F44336';
+    ctx.beginPath();
+    ctx.arc(boss.x + shakeX, boss.y + shakeY, 50, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Aura roja brillante
+    ctx.strokeStyle = 'rgba(244, 67, 54, 0.5)';
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.arc(boss.x + shakeX, boss.y + shakeY, 60 + Math.sin(Date.now() / 200) * 5, 0, Math.PI * 2);
+    ctx.stroke();
+    
+    // Ojos brillantes
+    ctx.fillStyle = '#FFEB3B';
+    ctx.beginPath();
+    ctx.arc(boss.x - 15 + shakeX, boss.y - 10 + shakeY, 8, 0, Math.PI * 2);
+    ctx.arc(boss.x + 15 + shakeX, boss.y - 10 + shakeY, 8, 0, Math.PI * 2);
+    ctx.fill();
     
     // Barra de vida del boss (si es visible)
     if (bossHealthBarVisible) {
@@ -895,7 +835,7 @@ function drawBossHealthBar(boss) {
     
     // Nombre
     ctx.fillStyle = '#FFD700';
-    ctx.font = 'bold 20px "Press Start 2P", cursive';
+    ctx.font = 'bold 20px Arial, sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText('ROGELIO', canvas.width / 2, barY - 5);
     
@@ -914,7 +854,7 @@ function drawBossHealthBar(boss) {
     
     // Porcentaje
     ctx.fillStyle = '#FFFFFF';
-    ctx.font = '14px "Press Start 2P", cursive';
+    ctx.font = '14px Arial, sans-serif';
     ctx.textAlign = 'right';
     ctx.fillText(`${Math.round(healthPercent * 100)}%`, barX + barWidth - 5, barY + 25);
     
@@ -925,30 +865,20 @@ function drawBossHealthBar(boss) {
 // DIBUJADO DE DECORACIONES
 // ==========================================
 function drawDecorations() {
-    if (typeof SpriteManager === 'undefined') return;
-    
+    // Diseño simple: dibujar decoraciones como formas básicas de color
     for (let deco of decorations) {
         // Solo dibujar si está en el viewport
         if (!isInViewport(deco.x, deco.y, deco.width, deco.height)) continue;
         
-        const spriteKey = `decorations/${deco.type}`;
-        const sprite = SpriteManager.getSprite(spriteKey);
+        // Dibujar rectángulo de color según tipo
+        let color = '#888888';
+        if (deco.type.includes('tree')) color = '#2E7D32';
+        else if (deco.type.includes('bush')) color = '#4CAF50';
+        else if (deco.type.includes('rock')) color = '#757575';
+        else if (deco.type.includes('flower')) color = '#E91E63';
         
-        if (sprite) {
-            ctx.imageSmoothingEnabled = false;
-            ctx.drawImage(sprite, deco.x, deco.y, deco.width, deco.height);
-            ctx.imageSmoothingEnabled = true;
-        } else {
-            // Fallback: dibujar rectángulo de color según tipo
-            let color = '#888888';
-            if (deco.type.includes('tree')) color = '#2E7D32';
-            else if (deco.type.includes('bush')) color = '#4CAF50';
-            else if (deco.type.includes('rock')) color = '#757575';
-            else if (deco.type.includes('flower')) color = '#E91E63';
-            
-            ctx.fillStyle = color;
-            ctx.fillRect(deco.x, deco.y, deco.width, deco.height);
-        }
+        ctx.fillStyle = color;
+        ctx.fillRect(deco.x, deco.y, deco.width, deco.height);
     }
 }
 
@@ -956,10 +886,7 @@ function drawDecorations() {
 // DIBUJADO DE AGUA
 // ==========================================
 function drawWater() {
-    // Función placeholder para agua - se puede expandir con tiles de agua
-    if (typeof SpriteManager === 'undefined') return;
-    
-    // Ejemplo: dibujar algunos tiles de agua en posiciones fijas
+    // Función placeholder para agua - diseño simple con color azul
     const tileSize = 64;
     const waterPositions = [
         {x: 100, y: 100}, {x: 164, y: 100}, {x: 100, y: 164}, {x: 164, y: 164}
@@ -968,14 +895,8 @@ function drawWater() {
     for (let pos of waterPositions) {
         if (!isInViewport(pos.x, pos.y, tileSize, tileSize)) continue;
         
-        const spriteKey = 'tiles/water';
-        const sprite = SpriteManager.getSprite(spriteKey);
-        
-        if (sprite) {
-            ctx.imageSmoothingEnabled = false;
-            ctx.drawImage(sprite, pos.x, pos.y, tileSize, tileSize);
-            ctx.imageSmoothingEnabled = true;
-        }
+        ctx.fillStyle = '#2196F3';
+        ctx.fillRect(pos.x, pos.y, tileSize, tileSize);
     }
 }
 
@@ -983,12 +904,7 @@ function drawWater() {
 // DIBUJADO DE PARTÍCULAS/EFEECTOS
 // ==========================================
 function drawParticles() {
-    // Usar el nuevo sistema de partículas profesional
-    if (typeof ParticleSystem !== 'undefined') {
-        ParticleSystem.draw(ctx);
-    }
-    
-    // Mantener compatibilidad con el sistema antiguo de partículas
+    // Diseño simple: dibujar partículas básicas como círculos
     for (let particle of particles) {
         if (!isInViewport(particle.x, particle.y, particle.size || 5, particle.size || 5)) continue;
         
@@ -1005,15 +921,7 @@ function drawParticles() {
 // ACTUALIZAR EFECTOS Y PARTÍCULAS
 // ==========================================
 function updateEffects(deltaTime) {
-    // Actualizar sistema de partículas
-    if (typeof ParticleSystem !== 'undefined') {
-        ParticleSystem.update(deltaTime);
-    }
-    
-    // Actualizar efectos visuales
-    if (typeof VisualEffects !== 'undefined') {
-        VisualEffects.update(deltaTime);
-    }
+    // Diseño simple: sin efectos avanzados
 }
 
 // ==========================================
@@ -1035,15 +943,15 @@ function drawUI() {
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         
         ctx.fillStyle = '#F44336';
-        ctx.font = 'bold 48px "Press Start 2P", Courier New';
+        ctx.font = 'bold 48px Arial, sans-serif';
         ctx.textAlign = 'center';
         ctx.fillText('GAME OVER', canvas.width / 2, canvas.height / 2 - 30);
         
         ctx.fillStyle = '#FFFFFF';
-        ctx.font = '24px "Press Start 2P", Courier New';
+        ctx.font = '24px Arial, sans-serif';
         ctx.fillText(`Olas sobrevividas: ${player.wave}`, canvas.width / 2, canvas.height / 2 + 20);
         
-        ctx.font = '16px "Press Start 2P", Courier New';
+        ctx.font = '16px Arial, sans-serif';
         ctx.fillStyle = '#AAAAAA';
         ctx.fillText('Click para volver al menú', canvas.width / 2, canvas.height / 2 + 60);
     }
