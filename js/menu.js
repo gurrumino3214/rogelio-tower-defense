@@ -704,6 +704,14 @@ function startGameFromMenu() {
         enemies = [];
         bullets = [];
         particles = [];
+        
+        // Resetear variables del boss Rogelio
+        if (typeof bossRogelio !== 'undefined') {
+            bossRogelio = null;
+        }
+        if (typeof bossActive !== 'undefined') {
+            bossActive = false;
+        }
 
         // Incrementar partidas jugadas
         incrementStat('gamesPlayed');
@@ -754,6 +762,14 @@ function restartGame() {
         enemies = [];
         bullets = [];
         particles = [];
+        
+        // Resetear variables del boss Rogelio
+        if (typeof bossRogelio !== 'undefined') {
+            bossRogelio = null;
+        }
+        if (typeof bossActive !== 'undefined') {
+            bossActive = false;
+        }
         
         gameState = 'PLAYING';
         menuElements.pauseMenu.classList.remove('active');
