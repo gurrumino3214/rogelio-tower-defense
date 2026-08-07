@@ -62,11 +62,10 @@ function createMenuElements() {
         <p class="menu-subtitle">Defiende tu reino de las hordas enemigas<br>con torres estratégicas y poderosas</p>
         <div class="menu-buttons">
             <button class="menu-btn play-btn" data-action="play">▶ Jugar</button>
-            <button class="menu-btn" data-action="settings">⚙ Configuración</button>
-            <button class="menu-btn" data-action="howto">📖 Cómo jugar</button>
-            <button class="menu-btn" data-action="stats">🏆 Estadísticas</button>
-            <button class="menu-btn" data-action="credits">🎨 Créditos</button>
-            <button class="menu-btn exit-btn" data-action="exit">🚪 Salir</button>
+            <button class="menu-btn settings-btn" data-action="settings">⚙ Configuración</button>
+            <button class="menu-btn howto-btn" data-action="howto">📖 Cómo jugar</button>
+            <button class="menu-btn stats-btn" data-action="stats">🏆 Estadísticas</button>
+            <button class="menu-btn credits-btn" data-action="credits">🎨 Créditos</button>
         </div>
     `;
     container.appendChild(mainMenu);
@@ -139,6 +138,9 @@ function createModals(container) {
         <div class="modal-content">
             <button class="modal-close" data-close="settings">×</button>
             <h2 class="modal-title">CONFIGURACIÓN</h2>
+            <div class="modal-info">
+                <p class="modal-description">Ajusta las opciones del juego para mejorar tu experiencia. Puedes modificar el volumen, la calidad gráfica y otras preferencias.</p>
+            </div>
             <div class="settings-grid">
                 <div class="setting-item">
                     <label class="setting-label">Volumen General</label>
@@ -209,6 +211,9 @@ function createModals(container) {
         <div class="modal-content">
             <button class="modal-close" data-close="howto">×</button>
             <h2 class="modal-title">CÓMO JUGAR</h2>
+            <div class="modal-info">
+                <p class="modal-description">Aprende a dominar el arte de la defensa de torres con estas guías esenciales. Sigue estos consejos para convertirte en un verdadero estratega.</p>
+            </div>
             <div class="howto-section">
                 <h3 class="howto-title">🏗️ Cómo colocar torres</h3>
                 <p class="howto-text">Haz click en cualquier lugar del mapa para colocar una torre. Cada torre cuesta $50. Asegúrate de no colocarlas sobre el camino.</p>
@@ -241,6 +246,9 @@ function createModals(container) {
         <div class="modal-content">
             <button class="modal-close" data-close="stats">×</button>
             <h2 class="modal-title">ESTADÍSTICAS</h2>
+            <div class="modal-info">
+                <p class="modal-description">Revisa tu progreso y logros en el juego. Estas estadísticas muestran tu desempeño como estratega en la defensa del reino.</p>
+            </div>
             <div class="stats-grid">
                 <div class="stat-item">
                     <div class="stat-value" id="statGamesPlayed">0</div>
@@ -283,6 +291,9 @@ function createModals(container) {
         <div class="modal-content">
             <button class="modal-close" data-close="credits">×</button>
             <h2 class="modal-title">CRÉDITOS</h2>
+            <div class="modal-info">
+                <p class="modal-description">Un agradecimiento especial a todas las personas que hicieron posible este juego. Cada línea de código y cada detalle fue creado con pasión.</p>
+            </div>
             <div class="credits-list">
                 <h3 class="credits-name">ROGELIO TOWER DEFENSE</h3>
                 
@@ -442,9 +453,6 @@ function handleMenuButtonClick(e) {
             break;
         case 'credits':
             openModal('credits');
-            break;
-        case 'exit':
-            handleExit();
             break;
     }
 }
@@ -774,12 +782,6 @@ function showMainMenu() {
         enemies = [];
         bullets = [];
     });
-}
-
-function handleExit() {
-    // En navegador, mostramos el menú nuevamente
-    // En una app nativa, esto cerraría la aplicación
-    showMainMenu();
 }
 
 // ==========================================
