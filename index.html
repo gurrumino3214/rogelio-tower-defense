@@ -3,57 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tower Defense - Dark Pixel Art Edition</title>
-    <link rel="stylesheet" href="css/style.css">
+    <title>Tower Defense - Rogelio</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background-color: #1a1a2e;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Courier New', monospace;
+            overflow: hidden;
+        }
+        
+        #gameContainer {
+            position: relative;
+            border: 4px solid #4a4a6a;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+        
+        canvas {
+            display: block;
+            background-color: #2d2d44;
+        }
+    </style>
 </head>
 <body>
-    <div id="game-container">
+    <div id="gameContainer">
         <canvas id="gameCanvas"></canvas>
-        <div id="ui-overlay"></div>
     </div>
 
-    <!-- Scripts en orden de dependencia -->
-    <script src="js/tilemap.js"></script>
-    <script src="js/maploader.js"></script>
-    <script src="js/engine.js"></script>
-    
-    <!-- Sistema de Torres (nuevo sistema modular) -->
-    <script src="js/towers/TowerTypes.js"></script>
-    <script src="js/towers/Tower.js"></script>
-    <script src="js/towers/TowerManager.js"></script>
-    <script src="js/towers/TowerAnimations.js"></script>
-    
-    <!-- Legacy towers (mantener compatibilidad) -->
-    <script src="js/enemy.js"></script>
-    <script src="js/bullets.js"></script>
-    <script src="js/waves.js"></script>
-    <script src="js/boss.js"></script>
-    
-    <!-- Sistema de UI Modular -->
-    <!-- Componentes base -->
-    <script src="js/ui/components/UIComponent.js"></script>
-    <script src="js/ui/components/UIButton.js"></script>
-    <script src="js/ui/components/UIPanel.js"></script>
-    <script src="js/ui/components/UIBar.js"></script>
-    <script src="js/ui/components/UILabel.js"></script>
-    <script src="js/ui/components/UIItemImage.js"></script>
-    <script src="js/ui/components/index.js"></script>
-    
-    <!-- Pantallas -->
-    <script src="js/ui/screens/UIScreen.js"></script>
-    <script src="js/ui/screens/MainMenuScreen.js"></script>
-    <script src="js/ui/screens/HUDScreen.js"></script>
-    <script src="js/ui/screens/PauseScreen.js"></script>
-    <script src="js/ui/screens/index.js"></script>
-    
-    <!-- Sistemas gestores -->
-    <script src="js/ui/systems/UIManager.js"></script>
-    <script src="js/ui/systems/index.js"></script>
-    
-    <!-- UI principal (estilos y utilidades) -->
-    <script src="js/ui.js"></script>
-    
-    <!-- Juego principal -->
     <script src="js/game.js"></script>
 </body>
 </html>
