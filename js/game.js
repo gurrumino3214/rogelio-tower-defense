@@ -902,9 +902,8 @@ function drawTerrainBackground() {
             const x = col * tileSize;
             const y = row * tileSize;
             
-            // Alternar entre dos tonos de verde para variedad visual simple
-            const isAlt = (row + col) % 2 === 0;
-            ctx.fillStyle = isAlt ? '#388E3C' : '#4CAF50';
+            // Un solo tono de verde neutro para todo el fondo
+            ctx.fillStyle = '#4A7C4E';
             ctx.fillRect(x, y, tileSize, tileSize);
         }
     }
@@ -914,10 +913,10 @@ function drawTerrainBackground() {
 // DIBUJADO DE TORRES CON SPRITES
 // ==========================================
 function drawTowerWithSprite(tower) {
-    // Diseño simple: dibujar torre como rectángulo de color
-    ctx.fillStyle = tower.color;
+    // Torre de color café
+    ctx.fillStyle = '#8B4513';
     ctx.fillRect(tower.x - 20, tower.y - 20, 40, 40);
-    ctx.fillStyle = '#2E7D32';
+    ctx.fillStyle = '#A0522D';
     ctx.fillRect(tower.x - 10, tower.y - 10, 20, 20);
 }
 

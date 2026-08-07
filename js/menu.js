@@ -85,6 +85,10 @@ function createMenuElements() {
                 <span id="hudWave">1</span>
             </div>
             <div class="hud-stat">
+                <div class="hud-stat-icon">⏱️</div>
+                <span id="hudTime">0:00</span>
+            </div>
+            <div class="hud-stat">
                 <div class="hud-stat-icon">💰</div>
                 <span id="hudMoney">100</span>
             </div>
@@ -92,7 +96,7 @@ function createMenuElements() {
                 <button class="hud-btn" id="btnPause">⏸ Pausa</button>
                 <button class="hud-btn" id="btnSpeed">⏩ x1</button>
                 <button class="hud-btn" id="btnRestart">🔄 Reiniciar</button>
-                <button class="hud-btn" id="btnMenu">🏠 Menú</button>
+                <button class="hud-btn" id="btnMenu">🏠 Salir</button>
             </div>
         </div>
     `;
@@ -797,6 +801,19 @@ function showMainMenu() {
         towers = [];
         enemies = [];
         bullets = [];
+        particles = [];
+        
+        // Resetear variables del boss
+        if (typeof bossRogelio !== 'undefined') bossRogelio = null;
+        if (typeof bossActive !== 'undefined') bossActive = false;
+        if (typeof bossHealthBarVisible !== 'undefined') bossHealthBarVisible = false;
+        if (typeof screenShakeIntensity !== 'undefined') screenShakeIntensity = 0;
+        if (typeof roglioAppearedText !== 'undefined') roglioAppearedText = '';
+        if (typeof roglioAppearedAlpha !== 'undefined') roglioAppearedAlpha = 0;
+        
+        // Reinicializar decoraciones y cámara
+        if (typeof initDecorations === 'function') initDecorations();
+        if (typeof initCamera === 'function') initCamera();
     });
 }
 
@@ -809,6 +826,13 @@ function updateHUD() {
     document.getElementById('hudLives').textContent = player.lives;
     document.getElementById('hudWave').textContent = player.wave;
     document.getElementById('hudMoney').textContent = player.money;
+    
+    // Actualizar tiempo jugado
+    const stats = JSON.parse(localStorage.getItem('rogelioTD_stats') || '{}');
+    const timePlayed = stats.timePlayed || 0;
+    const minutes = Math.floor(timePlayed / 60);
+    const seconds = Math.floor(timePlayed % 60);
+    document.getElementById('hudTime').textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
 }
 
 // ==========================================
