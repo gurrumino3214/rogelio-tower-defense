@@ -1,35 +1,19 @@
 /* ========================================
    TOWER DEFENSE - DARK PIXEL ART STYLE
-   Inspirado en: Blasphemous, Dead Cells,
-   Hyper Light Drifter, The Last Night
    ======================================== */
 
-/* Variables de color - Paleta oscura y atmosférica */
 :root {
-    /* Colores base oscuros */
     --bg-primary: #0a0a0c;
     --bg-secondary: #121216;
     --bg-tertiary: #1a1a20;
-    
-    /* Colores de acento apagados */
     --accent-red: #8b2e2e;
     --accent-blue: #2e4a8b;
     --accent-green: #2e5a3a;
-    --accent-purple: #4a2e6b;
     --accent-gold: #8b6b2e;
-    
-    /* Sombras y contrastes */
-    --shadow-dark: #000000;
-    --shadow-mid: #1a1a1f;
-    --highlight: #2a2a30;
-    
-    /* Texto UI */
     --text-primary: #d0d0d5;
     --text-secondary: #808085;
-    --text-muted: #505055;
 }
 
-/* Reset y configuración base */
 * {
     margin: 0;
     padding: 0;
@@ -43,9 +27,8 @@ body {
     align-items: center;
     min-height: 100vh;
     overflow: hidden;
-    font-family: 'Courier New', monospace; /* Fuente pixel-friendly */
+    font-family: 'Courier New', monospace;
     image-rendering: pixelated;
-    image-rendering: crisp-edges;
 }
 
 #game-container {
@@ -54,42 +37,16 @@ body {
     height: 600px;
 }
 
-/* Canvas del juego */
 #gameCanvas {
     display: block;
     background-color: var(--bg-secondary);
     image-rendering: pixelated;
-    image-rendering: crisp-edges;
     max-width: 100%;
     max-height: 100%;
-    box-shadow: 
-        0 0 20px rgba(0, 0, 0, 0.8),
-        0 0 40px rgba(0, 0, 0, 0.6),
-        inset 0 0 60px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
     border: 2px solid var(--bg-tertiary);
 }
 
-/* Efecto CRT opcional para más atmósfera */
-.crt-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    background: 
-        repeating-linear-gradient(
-            0deg,
-            rgba(0, 0, 0, 0.1) 0px,
-            rgba(0, 0, 0, 0.1) 1px,
-            transparent 1px,
-            transparent 2px
-        );
-    z-index: 1000;
-    opacity: 0.3;
-}
-
-/* UI del juego */
 #ui-overlay {
     position: absolute;
     top: 0;
@@ -97,92 +54,4 @@ body {
     width: 100%;
     height: 100%;
     pointer-events: none;
-}
-
-.game-ui {
-    position: absolute;
-    top: 20px;
-    left: 20px;
-    color: var(--text-primary);
-    font-size: 14px;
-    text-shadow: 2px 2px 0px var(--shadow-dark);
-    pointer-events: none;
-}
-
-.ui-panel {
-    background-color: var(--bg-tertiary);
-    border: 2px solid var(--shadow-mid);
-    padding: 10px 15px;
-    margin-bottom: 10px;
-    box-shadow: 
-        4px 4px 0px var(--shadow-dark),
-        inset 2px 2px 0px var(--highlight);
-    pointer-events: auto;
-}
-
-.ui-text {
-    color: var(--text-primary);
-    text-transform: uppercase;
-    letter-spacing: 2px;
-}
-
-.ui-value {
-    color: var(--accent-gold);
-    font-weight: bold;
-}
-
-/* Barra de vida estilo pixel art */
-.health-bar {
-    width: 200px;
-    height: 20px;
-    background-color: var(--shadow-dark);
-    border: 2px solid var(--shadow-mid);
-    position: relative;
-    overflow: hidden;
-}
-
-.health-fill {
-    height: 100%;
-    background: linear-gradient(
-        90deg,
-        var(--accent-red) 0%,
-        #a83838 50%,
-        var(--accent-red) 100%
-    );
-    transition: width 0.3s ease;
-    image-rendering: pixelated;
-}
-
-/* Animaciones suaves para elementos UI */
-@keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.7; }
-}
-
-.pulse {
-    animation: pulse 2s infinite;
-}
-
-/* Tooltip estilo pixel art */
-.tooltip {
-    position: absolute;
-    background-color: var(--bg-tertiary);
-    border: 2px solid var(--accent-gold);
-    padding: 8px 12px;
-    color: var(--text-primary);
-    font-size: 12px;
-    box-shadow: 
-        4px 4px 0px var(--shadow-dark),
-        inset 2px 2px 0px var(--highlight);
-    pointer-events: none;
-    z-index: 100;
-    max-width: 250px;
-}
-
-/* Efectos de partículas (para explosiones, etc.) */
-.particle {
-    position: absolute;
-    width: 4px;
-    height: 4px;
-    image-rendering: pixelated;
 }
