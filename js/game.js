@@ -26,14 +26,17 @@ const WaveManager = {
     spawnInterval: 2000,
     active: false,
     bossWave: false,
+    miniBossWave: false,
     bossSpawned: false,
     bossDefeated: false,
+    finalWave: 50, // Oleada final donde aparece Rogelio
     
     startWave: function(waveNum) {
         this.wave = waveNum;
-        this.bossWave = (waveNum % 10 === 0);
+        this.bossWave = (waveNum === this.finalWave); // Solo la última oleada es boss final
+        this.miniBossWave = (waveNum % 10 === 0 && !this.bossWave); // Cada 10 oleadas (excepto la final) es mini boss
         this.total = 5 + Math.floor(waveNum * 1.5);
-        if (this.bossWave) {
+        if (this.bossWave || this.miniBossWave) {
             this.total = 3; // Menos enemigos normales en boss wave
         }
         this.spawned = 0;
@@ -44,21 +47,22 @@ const WaveManager = {
         this.bossSpawned = false;
         this.bossDefeated = false;
         this.spawnTimer = 0;
-        console.log('[WAVE] Oleada ' + waveNum + ' iniciada. Total: ' + this.total + (this.bossWave ? ' + BOSS' : ''));
+        console.log('[WAVE] Oleada ' + waveNum + ' iniciada. Total: ' + this.total + 
+            (this.bossWave ? ' + BOSS FINAL ROGELIO' : (this.miniBossWave ? ' + MINI BOSS' : '')));
     },
     
     update: function(deltaTime) {
         if (!this.active) return false;
         
         // Spawnear enemigos normales
-        if (this.spawned < this.total && !this.bossWave) {
+        if (this.spawned < this.total && !this.bossWave && !this.miniBossWave) {
             this.spawnTimer += deltaTime * gameSpeed;
             if (this.spawnTimer >= this.spawnInterval) {
                 this.spawnTimer = 0;
                 this.spawnNormalEnemy();
                 this.spawned++;
             }
-        } else if (this.bossWave && !this.bossSpawned && this.spawned >= this.total) {
+        } else if ((this.bossWave || this.miniBossWave) && !this.bossSpawned && this.spawned >= this.total) {
             // Spawnear boss después de enemigos normales
             this.spawnBoss();
             this.bossSpawned = true;
@@ -82,7 +86,13 @@ const WaveManager = {
     },
     
     spawnBoss: function() {
-        spawnBossRogelio();
+        if (this.bossWave) {
+            // Oleada final: Boss Rogelio (rojo, el más grande)
+            spawnBossRogelio(true); // isFinal = true
+        } else if (this.miniBossWave) {
+            // Cada 10 oleadas: Mini boss random de color diferente
+            spawnMiniBoss(this.wave);
+        }
     },
     
     completeWave: function() {
@@ -372,7 +382,8 @@ function getEnemyTypeForWave(wave) {
     
     // Seleccionar tipo basado en la oleada
     let index = Math.min(Math.floor((wave - 1) / 2), types.length - 1);
-    if (wave % 10 === 0) index = types.length - 1; // Skeleton Lord en oleadas de boss
+    // No usar skeleton_lord para oleadas de mini boss o boss final (ya hay boss)
+    if (wave % 10 === 0 && wave !== WaveManager.finalWave) index = types.length - 2; // Dark Knight en oleadas de mini boss
     
     return types[index];
 }
@@ -380,35 +391,100 @@ function getEnemyTypeForWave(wave) {
 // ==========================================
 // SPAWN DEL BOSS ROGELIO
 // ==========================================
-function spawnBossRogelio() {
+function spawnBossRogelio(isFinal = false) {
     bossActive = true;
+    
+    // Si es la oleada final, Rogelio es más grande y más poderoso
+    const bossSize = isFinal ? 192 : 128;
+    const bossHealth = isFinal ? 15000 + (player.wave * 1000) : 5000 + (player.wave * 500);
+    const bossReward = isFinal ? 2000 : 500;
+    const bossDamage = isFinal ? 10 : 5;
+    
     bossRogelio = {
         x: path[0].x - 100,
         y: path[0].y,
         waypointIndex: 0,
-        speed: 0.8,
-        health: 5000 + (player.wave * 500),
-        maxHealth: 5000 + (player.wave * 500),
-        reward: 500,
-        color: '#F44336',
+        speed: isFinal ? 0.6 : 0.8,
+        health: bossHealth,
+        maxHealth: bossHealth,
+        reward: bossReward,
+        color: '#F44336', // Rojo para Rogelio
         type: 'rogelio',
-        damage: 5,
-        width: 128,
-        height: 128,
+        damage: bossDamage,
+        width: bossSize,
+        height: bossSize,
         attackCooldown: 0,
         specialAttackCooldown: 0,
         state: 'walking', // walking, attacking, roaring
         animationFrame: 0,
-        lastAnimationUpdate: 0
+        lastAnimationUpdate: 0,
+        isFinalBoss: isFinal
     };
     
     // Efectos de aparición
-    screenShakeIntensity = 20;
+    screenShakeIntensity = isFinal ? 40 : 20;
     bossHealthBarVisible = true;
-    roglioAppearedText = '¡¡ROGELIO HA APARECIDO!!';
+    roglioAppearedText = isFinal ? '¡¡ROGELIO FINAL HA APARECIDO!!' : '¡¡ROGELIO HA APARECIDO!!';
     roglioAppearedAlpha = 1;
     
-    console.log('[BOSS] ¡Rogelio ha aparecido!');
+    console.log('[BOSS] ¡Rogelio ha aparecido!' + (isFinal ? ' (FINAL BOSS)' : ''));
+}
+
+// ==========================================
+// SPAWN DE MINI BOSS RANDOM
+// ==========================================
+function spawnMiniBoss(wave) {
+    bossActive = true;
+    
+    // Colores random para mini bosses
+    const miniBossColors = [
+        '#FF5722', // Naranja
+        '#9C27B0', // Morado
+        '#3F51B5', // Azul oscuro
+        '#00BCD4', // Cyan
+        '#FFEB3B', // Amarillo
+        '#4CAF50', // Verde
+        '#FF9800'  // Naranja claro
+    ];
+    
+    // Seleccionar color basado en la oleada (determinista pero variado)
+    const colorIndex = Math.floor(wave / 10) % miniBossColors.length;
+    const bossColor = miniBossColors[colorIndex];
+    
+    // Mini boss es más pequeño que Rogelio final pero más grande que enemigos normales
+    const bossSize = 96;
+    const bossHealth = 3000 + (wave * 300);
+    const bossReward = 300;
+    const bossDamage = 4;
+    
+    bossRogelio = {
+        x: path[0].x - 100,
+        y: path[0].y,
+        waypointIndex: 0,
+        speed: 1.0,
+        health: bossHealth,
+        maxHealth: bossHealth,
+        reward: bossReward,
+        color: bossColor,
+        type: 'miniboss',
+        damage: bossDamage,
+        width: bossSize,
+        height: bossSize,
+        attackCooldown: 0,
+        specialAttackCooldown: 0,
+        state: 'walking',
+        animationFrame: 0,
+        lastAnimationUpdate: 0,
+        isFinalBoss: false
+    };
+    
+    // Efectos de aparición
+    screenShakeIntensity = 15;
+    bossHealthBarVisible = true;
+    roglioAppearedText = '¡¡MINI BOSS HA APARECIDO!!';
+    roglioAppearedAlpha = 1;
+    
+    console.log('[MINIBOSS] ¡Mini boss de color ' + bossColor + ' ha aparecido!');
 }
 
 // ==========================================
@@ -872,11 +948,31 @@ function drawBossRogelio() {
     
     const boss = bossRogelio;
     
-    // Diseño simple: dibujar boss como círculo rojo grande
-    ctx.fillStyle = '#F44336';
+    // Usar el tamaño real del boss (width/2 como radio)
+    const bossRadius = (boss.width || 128) / 2;
+    
+    // Diseño simple: dibujar boss como círculo con su color específico
+    ctx.fillStyle = boss.color || '#F44336';
     ctx.beginPath();
-    ctx.arc(boss.x, boss.y, 50, 0, Math.PI * 2);
+    ctx.arc(boss.x, boss.y, bossRadius, 0, Math.PI * 2);
     ctx.fill();
+    
+    // Aura especial para el boss final Rogelio
+    if (boss.isFinalBoss) {
+        // Aura roja brillante más grande
+        ctx.strokeStyle = 'rgba(244, 67, 54, 0.7)';
+        ctx.lineWidth = 8;
+        ctx.beginPath();
+        ctx.arc(boss.x, boss.y, bossRadius + 15 + Math.sin(Date.now() / 200) * 8, 0, Math.PI * 2);
+        ctx.stroke();
+    } else if (boss.type === 'miniboss') {
+        // Aura de mini boss
+        ctx.strokeStyle = boss.color + '80'; // Semi-transparente
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.arc(boss.x, boss.y, bossRadius + 10 + Math.sin(Date.now() / 200) * 5, 0, Math.PI * 2);
+        ctx.stroke();
+    }
     
     // Barra de vida del boss (si es visible)
     if (bossHealthBarVisible) {
@@ -930,10 +1026,17 @@ function drawBossHealthBar(boss) {
     ctx.fillStyle = '#333333';
     ctx.fillRect(barX, barY, barWidth, barHeight);
     
-    // Vida actual
+    // Vida actual - usar color del boss si existe
     const healthPercent = boss.health / boss.maxHealth;
-    ctx.fillStyle = '#F44336';
+    ctx.fillStyle = boss.color || '#F44336';
     ctx.fillRect(barX, barY, barWidth * healthPercent, barHeight);
+    
+    // Texto del nombre del boss
+    ctx.font = 'bold 16px Arial';
+    ctx.fillStyle = '#FFFFFF';
+    ctx.textAlign = 'center';
+    const bossName = boss.isFinalBoss ? 'ROGELIO FINAL' : (boss.type === 'miniboss' ? 'MINI BOSS' : 'ROGELIO');
+    ctx.fillText(bossName, canvas.width / 2, barY - 8);
     
     ctx.restore();
 }
