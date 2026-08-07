@@ -475,6 +475,9 @@ function draw() {
     ctx.fillStyle = '#2d2d44';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
+    // Dibujar fondo con tiles de terreno
+    drawTerrainBackground();
+    
     // Dibujar camino
     ctx.strokeStyle = '#555566';
     ctx.lineWidth = 40;
@@ -492,7 +495,7 @@ function draw() {
     ctx.lineWidth = 30;
     ctx.stroke();
     
-    // Dibujar torres
+    // Dibujar torres con sprites
     for (let tower of towers) {
         // Rango (solo si está jugando)
         if (gameState === 'PLAYING') {
@@ -503,31 +506,121 @@ function draw() {
             ctx.stroke();
         }
         
-        // Torre
-        ctx.fillStyle = tower.color;
-        ctx.fillRect(tower.x - 20, tower.y - 20, 40, 40);
-        
-        // Detalle de la torre
-        ctx.fillStyle = '#2E7D32';
-        ctx.fillRect(tower.x - 10, tower.y - 10, 20, 20);
+        // Torre con sprite
+        drawTowerWithSprite(tower);
     }
     
-    // Dibujar enemigos
+    // Dibujar enemigos con sprites
     for (let enemy of enemies) {
-        // Cuerpo del enemigo
+        drawEnemyWithSprite(enemy);
+    }
+    
+    // Dibujar balas
+    for (let bullet of bullets) {
+        ctx.fillStyle = bullet.color;
+        ctx.beginPath();
+        ctx.arc(bullet.x, bullet.y, 5, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    
+    ctx.restore();
+}
+
+// ==========================================
+// DIBUJADO DE TERRENO DE FONDO
+// ==========================================
+function drawTerrainBackground() {
+    if (typeof SpriteManager === 'undefined') return;
+    
+    const tileSize = 64;
+    const cols = Math.ceil(canvas.width / tileSize) + 1;
+    const rows = Math.ceil(canvas.height / tileSize) + 1;
+    
+    for (let row = 0; row < rows; row++) {
+        for (let col = 0; col < cols; col++) {
+            const x = col * tileSize;
+            const y = row * tileSize;
+            
+            // Alternar entre grass y grass_alt para variedad
+            const isAlt = (row + col) % 2 === 0;
+            const spriteKey = `tiles/${isAlt ? 'grass' : 'grass_alt'}`;
+            const sprite = SpriteManager.getSprite(spriteKey);
+            
+            if (sprite) {
+                ctx.imageSmoothingEnabled = false;
+                ctx.drawImage(sprite, x, y, tileSize, tileSize);
+                ctx.imageSmoothingEnabled = true;
+            } else {
+                // Fallback: dibujar rectángulo verde
+                ctx.fillStyle = isAlt ? '#388E3C' : '#4CAF50';
+                ctx.fillRect(x, y, tileSize, tileSize);
+            }
+        }
+    }
+}
+
+// ==========================================
+// DIBUJADO DE TORRES CON SPRITES
+// ==========================================
+function drawTowerWithSprite(tower) {
+    if (typeof SpriteManager !== 'undefined') {
+        // Usar sprite de archer por defecto
+        const animFrame = Math.floor((Date.now() / 100) % 8);
+        const spriteKey = `towers/archer_frame_${animFrame}`;
+        const sprite = SpriteManager.getSprite(spriteKey);
+        
+        if (sprite) {
+            ctx.imageSmoothingEnabled = false;
+            ctx.drawImage(sprite, tower.x - 20, tower.y - 20, 40, 40);
+            ctx.imageSmoothingEnabled = true;
+            return;
+        }
+    }
+    
+    // Fallback: dibujar rectángulo verde
+    ctx.fillStyle = tower.color;
+    ctx.fillRect(tower.x - 20, tower.y - 20, 40, 40);
+    ctx.fillStyle = '#2E7D32';
+    ctx.fillRect(tower.x - 10, tower.y - 10, 20, 20);
+}
+
+// ==========================================
+// DIBUJADO DE ENEMIGOS CON SPRITES
+// ==========================================
+function drawEnemyWithSprite(enemy) {
+    if (typeof SpriteManager !== 'undefined') {
+        // Determinar sprite según tipo de enemigo
+        const animFrame = Math.floor((Date.now() / 100) % 8);
+        const spriteKey = `enemies/${enemy.type}_walk_${animFrame}`;
+        const sprite = SpriteManager.getSprite(spriteKey);
+        
+        if (sprite) {
+            ctx.imageSmoothingEnabled = false;
+            ctx.drawImage(sprite, enemy.x - 15, enemy.y - 15, 30, 30);
+            ctx.imageSmoothingEnabled = true;
+        } else {
+            // Fallback: dibujar círculo de color
+            ctx.fillStyle = enemy.color;
+            ctx.beginPath();
+            ctx.arc(enemy.x, enemy.y, 15, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    } else {
+        // Fallback si SpriteManager no está disponible
         ctx.fillStyle = enemy.color;
         ctx.beginPath();
         ctx.arc(enemy.x, enemy.y, 15, 0, Math.PI * 2);
         ctx.fill();
-        
-        // Barra de vida
-        let healthPercent = enemy.health / enemy.maxHealth;
-        ctx.fillStyle = '#333333';
-        ctx.fillRect(enemy.x - 15, enemy.y - 25, 30, 5);
-        ctx.fillStyle = healthPercent > 0.5 ? '#4CAF50' : healthPercent > 0.25 ? '#FFC107' : '#F44336';
-        ctx.fillRect(enemy.x - 15, enemy.y - 25, 30 * healthPercent, 5);
     }
     
+    // Barra de vida (siempre visible)
+    let healthPercent = enemy.health / enemy.maxHealth;
+    ctx.fillStyle = '#333333';
+    ctx.fillRect(enemy.x - 15, enemy.y - 25, 30, 5);
+    ctx.fillStyle = healthPercent > 0.5 ? '#4CAF50' : healthPercent > 0.25 ? '#FFC107' : '#F44336';
+    ctx.fillRect(enemy.x - 15, enemy.y - 25, 30 * healthPercent, 5);
+}
+
 
 // ==========================================
 // DIBUJADO DEL BOSS ROGELIO
