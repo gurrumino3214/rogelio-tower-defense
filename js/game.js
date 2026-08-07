@@ -417,6 +417,9 @@ function spawnBossRogelio() {
 function update(deltaTime) {
     if (gameState !== 'PLAYING') return;
     
+    // Actualizar wave manager (sistema de olas)
+    WaveManager.update(deltaTime);
+    
     // Actualizar screen shake
     if (screenShakeIntensity > 0) {
         screenShakeIntensity *= 0.9;
@@ -450,6 +453,10 @@ function update(deltaTime) {
                 if (enemy.waypointIndex >= path.length - 1) {
                     // Enemigo llegó al final
                     player.lives--;
+                    
+                    // Notificar al WaveManager que un enemigo escapó
+                    WaveManager.enemyEscaped();
+                    
                     enemies.splice(i, 1);
                     
                     // Actualizar HUD
@@ -504,36 +511,72 @@ function update(deltaTime) {
         let dist = Math.sqrt(dx * dx + dy * dy);
         
         if (dist < bullet.speed) {
-            // Impacto
-            for (let j = enemies.length - 1; j >= 0; j--) {
-                let enemy = enemies[j];
-                let edx = enemy.x - bullet.targetX;
-                let edy = enemy.y - bullet.targetY;
+            // Impacto - verificar si es contra el boss
+            if (bullet.isBossTarget && bossRogelio && bossActive) {
+                let edx = bossRogelio.x - bullet.targetX;
+                let edy = bossRogelio.y - bullet.targetY;
                 let edist = Math.sqrt(edx * edx + edy * edy);
                 
-                if (edist < 30) {
-                    enemy.health -= bullet.damage;
+                if (edist < 60) {
+                    bossRogelio.health -= bullet.damage;
                     
-                    if (enemy.health <= 0) {
-                        player.money += enemy.reward;
+                    if (bossRogelio.health <= 0) {
+                        // Boss derrotado
+                        player.money += bossRogelio.reward;
+                        
+                        // Notificar al WaveManager
+                        WaveManager.bossDefeated();
                         
                         // Actualizar estadísticas
                         if (window.menuAPI) {
                             window.menuAPI.incrementStat('enemiesDefeated');
                         }
                         
-                        enemies.splice(j, 1);
+                        bossActive = false;
+                        bossRogelio = null;
+                        bossHealthBarVisible = false;
                         
-                        // Actualizar HUD
-                        if (window.menuAPI) {
-                            window.menuAPI.updateHUD();
-                        }
+                        console.log('[BOSS] ¡Rogelio ha sido derrotado!');
                     } else {
-                        // Marcar enemigo como golpeado para efecto visual
-                        enemy.hitEffect = true;
-                        setTimeout(() => { enemy.hitEffect = false; }, 100);
+                        // Efecto de golpe
+                        screenShakeIntensity = 2;
                     }
-                    break;
+                }
+            } else {
+                // Impacto contra enemigos normales
+                for (let j = enemies.length - 1; j >= 0; j--) {
+                    let enemy = enemies[j];
+                    let edx = enemy.x - bullet.targetX;
+                    let edy = enemy.y - bullet.targetY;
+                    let edist = Math.sqrt(edx * edx + edy * edy);
+                    
+                    if (edist < 30) {
+                        enemy.health -= bullet.damage;
+                        
+                        if (enemy.health <= 0) {
+                            player.money += enemy.reward;
+                            
+                            // Actualizar estadísticas
+                            if (window.menuAPI) {
+                                window.menuAPI.incrementStat('enemiesDefeated');
+                            }
+                            
+                            // Notificar al WaveManager que un enemigo fue derrotado
+                            WaveManager.enemyDefeated();
+                            
+                            enemies.splice(j, 1);
+                            
+                            // Actualizar HUD
+                            if (window.menuAPI) {
+                                window.menuAPI.updateHUD();
+                            }
+                        } else {
+                            // Marcar enemigo como golpeado para efecto visual
+                            enemy.hitEffect = true;
+                            setTimeout(() => { enemy.hitEffect = false; }, 100);
+                        }
+                        break;
+                    }
                 }
             }
             bullets.splice(i, 1);
