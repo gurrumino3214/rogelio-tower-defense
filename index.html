@@ -3,42 +3,71 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tower Defense - Rogelio</title>
+    <title>Rogelio Tower Defense</title>
+    
+    <!-- Estilos principales -->
+    <link rel="stylesheet" href="css/styles.css">
+    
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            background-color: #1a1a2e;
+        /* Estilos críticos para carga inicial */
+        #loadingScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #0a0a0f;
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
-            font-family: 'Courier New', monospace;
-            overflow: hidden;
+            z-index: 9999;
+            transition: opacity 0.5s ease;
         }
         
-        #gameContainer {
-            position: relative;
-            border: 4px solid #4a4a6a;
-            border-radius: 8px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        .loading-text {
+            font-family: 'Press Start 2P', cursive;
+            color: #ffd700;
+            font-size: 24px;
+            animation: pulse 1s ease-in-out infinite;
         }
         
-        canvas {
-            display: block;
-            background-color: #2d2d44;
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
         }
     </style>
 </head>
 <body>
+    <!-- Pantalla de carga -->
+    <div id="loadingScreen">
+        <div class="loading-text">CARGANDO...</div>
+    </div>
+
     <div id="gameContainer">
         <canvas id="gameCanvas"></canvas>
     </div>
 
+    <!-- Scripts del juego -->
+    <script src="js/menu.js"></script>
     <script src="js/game.js"></script>
+    
+    <script>
+        // Esperar a que cargue todo el contenido
+        window.addEventListener('load', function() {
+            // Ocultar pantalla de carga
+            setTimeout(() => {
+                const loadingScreen = document.getElementById('loadingScreen');
+                loadingScreen.style.opacity = '0';
+                setTimeout(() => {
+                    loadingScreen.style.display = 'none';
+                }, 500);
+            }, 500);
+            
+            // Inicializar menú
+            if (typeof initMenu === 'function') {
+                initMenu();
+            }
+        });
+    </script>
 </body>
 </html>

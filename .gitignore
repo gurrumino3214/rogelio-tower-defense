@@ -1,7 +1,5 @@
-(js/game.js has no build artifacts, dependencies, or temp files that need ignoring)
+(css/styles.css, js/menu.js, index.html, js/game.js are all source files - no build artifacts, dependencies, or temp files in the changes)
 
-(js/HUDScreen.js, js/MainMenuScreen.js, js/UIButton.js, js/UIComponent.js, js/UILabel.js, js/UIManager.js, js/UIScreen.js, js/engine.js, js/ui.js are all source files being deleted)
+```gitignore
 
-(index.html is a source/config file being modified)
-
-(only source code and html files present, no build artifacts, dependencies, or temp files)
+```
