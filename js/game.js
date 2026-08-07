@@ -1,8 +1,6 @@
 // ==========================================
 // ROGELIO TOWER DEFENSE - GAME.JS
-// ==========================================
-// Este archivo contiene la lógica principal del juego.
-// Integración completa con sprites, partículas y efectos.
+// Versión Auditada y Reparada
 // ==========================================
 
 // Configuración del juego
@@ -11,88 +9,112 @@ let gameState = 'MENU'; // MENU, PLAYING, PAUSED, GAMEOVER, VICTORY
 let lastTime = 0;
 let gameSpeed = 1;
 let gameStartTime = 0;
+let timePlayedSession = 0; // Tiempo jugado en sesión actual (segundos)
+let lastTimePlayedUpdate = 0;
 
-// Sistema de oleadas
-let waveManager = {
-    currentWave: 1,
-    enemiesToSpawn: 0,
-    enemiesSpawned: 0,
-    enemiesRemaining: 0,
+// ==========================================
+// WAVE MANAGER - ÚNICA FUENTE DE VERDAD
+// ==========================================
+const WaveManager = {
+    wave: 1,
+    spawned: 0,
+    alive: 0,
+    defeated: 0,
+    escaped: 0,
+    total: 0,
     spawnTimer: 0,
     spawnInterval: 2000,
-    waveActive: false,
+    active: false,
     bossWave: false,
+    bossSpawned: false,
+    bossDefeated: false,
     
-    startWave: function(wave) {
-        this.currentWave = wave;
-        this.bossWave = (wave % 10 === 0);
-        this.enemiesToSpawn = 5 + Math.floor(wave * 1.5);
+    startWave: function(waveNum) {
+        this.wave = waveNum;
+        this.bossWave = (waveNum % 10 === 0);
+        this.total = 5 + Math.floor(waveNum * 1.5);
         if (this.bossWave) {
-            this.enemiesToSpawn = 3; // Menos enemigos normales en oleada de boss
+            this.total = 3; // Menos enemigos normales en boss wave
         }
-        this.enemiesSpawned = 0;
-        this.enemiesRemaining = this.enemiesToSpawn;
-        this.waveActive = true;
+        this.spawned = 0;
+        this.alive = 0;
+        this.defeated = 0;
+        this.escaped = 0;
+        this.active = true;
+        this.bossSpawned = false;
+        this.bossDefeated = false;
         this.spawnTimer = 0;
-        console.log('[WAVE] Oleada ' + wave + ' iniciada. Enemigos: ' + this.enemiesToSpawn + (this.bossWave ? ' + BOSS' : ''));
+        console.log('[WAVE] Oleada ' + waveNum + ' iniciada. Total: ' + this.total + (this.bossWave ? ' + BOSS' : ''));
     },
     
     update: function(deltaTime) {
-        if (!this.waveActive) return false;
+        if (!this.active) return false;
         
-        // Spawnear enemigos
-        if (this.enemiesSpawned < this.enemiesToSpawn) {
+        // Spawnear enemigos normales
+        if (this.spawned < this.total && !this.bossWave) {
             this.spawnTimer += deltaTime * gameSpeed;
             if (this.spawnTimer >= this.spawnInterval) {
                 this.spawnTimer = 0;
-                this.spawnEnemy();
-                this.enemiesSpawned++;
+                this.spawnNormalEnemy();
+                this.spawned++;
             }
+        } else if (this.bossWave && !this.bossSpawned && this.spawned >= this.total) {
+            // Spawnear boss después de enemigos normales
+            this.spawnBoss();
+            this.bossSpawned = true;
         }
         
+        // Contar enemigos vivos
+        this.alive = enemies.length + (bossRogelio && bossActive ? 1 : 0);
+        
         // Verificar si la oleada terminó
-        this.enemiesRemaining = enemies.length + (bossRogelio && bossActive ? 1 : 0);
-        if (this.enemiesSpawned >= this.enemiesToSpawn && this.enemiesRemaining <= 0) {
-            this.waveActive = false;
+        if (this.spawned >= this.total && this.alive <= 0 && (!this.bossWave || this.bossDefeated)) {
+            this.active = false;
             this.completeWave();
             return true;
         }
         return false;
     },
     
-    spawnEnemy: function() {
-        if (this.bossWave) {
-            // En oleada de boss, spawnear pocos enemigos antes del boss
-            let enemyType = getEnemyTypeForWave(this.currentWave);
-            createEnemy(enemyType);
-        } else {
-            let enemyType = getEnemyTypeForWave(this.currentWave);
-            createEnemy(enemyType);
-        }
+    spawnNormalEnemy: function() {
+        let enemyType = getEnemyTypeForWave(this.wave);
+        createEnemy(enemyType);
+    },
+    
+    spawnBoss: function() {
+        spawnBossRogelio();
     },
     
     completeWave: function() {
-        player.wave++;
-        console.log('[WAVE] Oleada ' + (player.wave - 1) + ' completada!');
+        console.log('[WAVE] Oleada ' + this.wave + ' completada!');
         
         // Guardar max wave
         const stats = JSON.parse(localStorage.getItem('rogelioTD_stats') || '{}');
-        if (!stats.maxWave || player.wave > stats.maxWave) {
-            stats.maxWave = player.wave;
+        if (!stats.maxWave || this.wave > stats.maxWave) {
+            stats.maxWave = this.wave;
             localStorage.setItem('rogelioTD_stats', JSON.stringify(stats));
         }
         
-        // Iniciar siguiente oleada después de 2 segundos
+        // Iniciar siguiente oleada después de 2 segundos (usando timer controlado)
         setTimeout(() => {
             if (gameState === 'PLAYING') {
-                waveManager.startWave(player.wave);
-                
-                // Si es oleada de boss, spawnear a Rogelio después de un mensaje
-                if (waveManager.bossWave) {
-                    setTimeout(spawnBossRogelio, 1000);
-                }
+                player.wave++;
+                this.startWave(player.wave);
             }
         }, 2000);
+    },
+    
+    enemyDefeated: function() {
+        this.defeated++;
+    },
+    
+    enemyEscaped: function() {
+        this.escaped++;
+    },
+    
+    bossDefeated: function() {
+        this.bossDefeated = true;
+        this.defeated++;
     }
 };
 
