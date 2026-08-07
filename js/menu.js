@@ -655,8 +655,8 @@ function fadeTransition(callback) {
         callback();
         setTimeout(() => {
             overlay.classList.remove('fade-in');
-        }, 500);
-    }, 500);
+        }, 300); // Transición más rápida
+    }, 300); // Transición más rápida
 }
 
 // ==========================================
@@ -665,11 +665,29 @@ function fadeTransition(callback) {
 function startGameFromMenu() {
     fadeTransition(() => {
         initAudio();
+        
+        // Ocultar menú y fondo usando clases CSS para asegurar que se oculten completamente
+        menuElements.mainMenu.classList.add('hidden');
+        menuElements.background.classList.add('hidden');
         menuElements.mainMenu.style.display = 'none';
         menuElements.background.style.display = 'none';
+        
         menuElements.gameUI.classList.add('active');
         gameState = 'PLAYING';
+
+        // Asegurar que el canvas ocupe toda la pantalla y sea visible
+        if (typeof resizeCanvas === 'function') {
+            resizeCanvas();
+        }
         
+        // Asegurar que el canvas esté visible
+        const gameCanvas = document.getElementById('gameCanvas');
+        if (gameCanvas) {
+            gameCanvas.style.display = 'block';
+            gameCanvas.style.visibility = 'visible';
+            gameCanvas.style.opacity = '1';
+        }
+
         // Resetear variables del juego
         player.money = 100;
         player.lives = 10;
@@ -678,18 +696,20 @@ function startGameFromMenu() {
         enemies = [];
         bullets = [];
         particles = [];
-        
+
         // Incrementar partidas jugadas
         incrementStat('gamesPlayed');
-        
+
         // Iniciar temporizador de juego
         gameStartTime = Date.now();
-        
+
         // Actualizar HUD
         updateHUD();
-        
+
         // Spawnear primer enemigo
         spawnEnemy();
+        
+        console.log('[MENU] Juego iniciado - Canvas:', gameCanvas ? 'visible' : 'no encontrado');
     });
 }
 
