@@ -1,3 +1,1 @@
-(js/game.js is a source file, so no need to add it to .gitignore)
-
-Nothing to output since only a source file was modified and no build artifacts, dependencies, or temp files were detected.
+(js/game.js, js/menu.js)

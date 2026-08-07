@@ -110,21 +110,21 @@ let screenShakeIntensity = 0;
 let roglioAppearedText = '';
 let roglioAppearedAlpha = 0;
 
-// Camino (waypoints) - Se ajusta dinámicamente al tamaño del canvas
+// Camino (waypoints) - En coordenadas del mundo
 let path = [];
 
 function initPath() {
-    const w = canvas.width;
-    const h = canvas.height;
+    // El camino ahora usa coordenadas del mundo, no del canvas
+    // Esto asegura que el camino permanezca en su lugar cuando la cámara se mueve
     path = [
-        {x: 0, y: h * 0.17},
-        {x: w * 0.25, y: h * 0.17},
-        {x: w * 0.25, y: h * 0.67},
-        {x: w * 0.625, y: h * 0.67},
-        {x: w * 0.625, y: h * 0.33},
-        {x: w * 0.875, y: h * 0.33},
-        {x: w * 0.875, y: h * 0.83},
-        {x: w, y: h * 0.83}
+        {x: 0, y: worldHeight * 0.17},
+        {x: worldWidth * 0.25, y: worldHeight * 0.17},
+        {x: worldWidth * 0.25, y: worldHeight * 0.67},
+        {x: worldWidth * 0.625, y: worldHeight * 0.67},
+        {x: worldWidth * 0.625, y: worldHeight * 0.33},
+        {x: worldWidth * 0.875, y: worldHeight * 0.33},
+        {x: worldWidth * 0.875, y: worldHeight * 0.83},
+        {x: worldWidth, y: worldHeight * 0.83}
     ];
 }
 
@@ -170,14 +170,19 @@ function startGame() {
 // ==========================================
 function handleClick(e) {
     const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const screenX = e.clientX - rect.left;
+    const screenY = e.clientY - rect.top;
+    
+    // Convertir coordenadas de pantalla a coordenadas del mundo
+    const worldPos = screenToWorld(screenX, screenY);
+    const x = worldPos.x;
+    const y = worldPos.y;
     
     if (gameState === 'MENU') {
         // El menú ahora maneja esto, no iniciar directamente
         return;
     } else if (gameState === 'PLAYING') {
-        // Colocar torre
+        // Colocar torre (usando coordenadas del mundo)
         if (player.money >= 50) {
             player.money -= 50;
             towers.push({
