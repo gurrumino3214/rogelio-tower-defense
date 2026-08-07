@@ -611,6 +611,8 @@ function update(deltaTime) {
                         bossActive = false;
                         bossRogelio = null;
                         bossHealthBarVisible = false;
+                        roglioAppearedText = '';
+                        roglioAppearedAlpha = 0;
                         
                         console.log('[BOSS] ¡Rogelio ha sido derrotado!');
                     } else {
@@ -698,6 +700,8 @@ function updateBossRogelio(deltaTime) {
                 bossActive = false;
                 bossRogelio = null;
                 bossHealthBarVisible = false;
+                roglioAppearedText = '';
+                roglioAppearedAlpha = 0;
                 
                 if (window.menuAPI) {
                     window.menuAPI.incrementStat('defeats');
@@ -869,7 +873,7 @@ function draw() {
     drawUI();
     
     // Dibujar texto de aparición de Rogelio (fuera del shake, en pantalla)
-    if (roglioAppearedAlpha > 0) {
+    if (roglioAppearedAlpha > 0 && roglioAppearedText) {
         ctx.save();
         ctx.globalAlpha = roglioAppearedAlpha;
         ctx.fillStyle = '#F44336';
@@ -877,7 +881,7 @@ function draw() {
         ctx.textAlign = 'center';
         ctx.shadowColor = '#FF0000';
         ctx.shadowBlur = 20;
-        ctx.fillText('¡¡ROGELIO HA APARECIDO!!', canvas.width / 2, canvas.height / 2);
+        ctx.fillText(roglioAppearedText, canvas.width / 2, canvas.height / 2);
         ctx.restore();
     }
 }
