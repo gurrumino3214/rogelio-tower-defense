@@ -718,6 +718,11 @@ function startGameFromMenu() {
             bossActive = false;
         }
 
+        // Reinicializar camino y decoraciones
+        if (typeof initPath === 'function') initPath();
+        if (typeof initDecorations === 'function') initDecorations();
+        if (typeof initCamera === 'function') initCamera();
+
         // Incrementar partidas jugadas
         incrementStat('gamesPlayed');
 

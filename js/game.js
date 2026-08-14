@@ -1161,7 +1161,8 @@ function restartGameAfterGameOver() {
     roglioAppearedText = '';
     roglioAppearedAlpha = 0;
     
-    // Reinicializar decoraciones y cámara
+    // Reinicializar decoraciones, camino y cámara
+    initPath();
     initDecorations();
     initCamera();
 }
