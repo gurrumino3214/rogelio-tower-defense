@@ -137,7 +137,8 @@ const WaveManager = {
 let player = {
     money: 100,
     lives: 10,
-    wave: 1
+    wave: 1,
+    enemiesDefeated: 0
 };
 
 // Entidades
@@ -145,6 +146,9 @@ let towers = [];
 let enemies = [];
 let bullets = [];
 let particles = []; // Declarar particles para evitar errores
+
+// Torre seleccionada para mejorar
+let selectedTower = null;
 
 // Sistema de boss Rogelio
 let bossRogelio = null;
@@ -294,7 +298,6 @@ function startGame() {
     initDecorations(); // Inicializar decoraciones
     requestAnimationFrame(gameLoop);
 }
-
 // ==========================================
 // MANEJO DE CLICKS
 // ==========================================
@@ -302,17 +305,37 @@ function handleClick(e) {
     const rect = canvas.getBoundingClientRect();
     const screenX = e.clientX - rect.left;
     const screenY = e.clientY - rect.top;
-    
+
     // Convertir coordenadas de pantalla a coordenadas del mundo
     const worldPos = screenToWorld(screenX, screenY);
     const x = worldPos.x;
     const y = worldPos.y;
-    
+
     if (gameState === 'MENU') {
         // El menú ahora maneja esto, no iniciar directamente
         return;
     } else if (gameState === 'PLAYING') {
-        // Colocar torre (usando coordenadas del mundo)
+        // Primero verificar si se hizo click en una torre existente para seleccionarla/mejorarla
+        let clickedTower = null;
+        for (let i = 0; i < towers.length; i++) {
+            let tower = towers[i];
+            let dx = x - tower.x;
+            let dy = y - tower.y;
+            let dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < 30) { // Radio de click en la torre
+                clickedTower = tower;
+                selectedTower = tower;
+                break;
+            }
+        }
+        
+        if (clickedTower) {
+            // Mostrar panel de mejora de torre
+            showTowerUpgradePanel(clickedTower);
+            return;
+        }
+        
+        // Si no se hizo click en una torre, colocar nueva torre
         if (player.money >= 50) {
             player.money -= 50;
             towers.push({
@@ -322,14 +345,15 @@ function handleClick(e) {
                 damage: 25,
                 fireRate: 1000,
                 lastShot: 0,
+                level: 1,
                 color: '#4CAF50'
             });
-            
+
             // Actualizar estadísticas
             if (window.menuAPI) {
                 window.menuAPI.incrementStat('towersPlaced');
             }
-            
+
             // Actualizar HUD
             if (window.menuAPI) {
                 window.menuAPI.updateHUD();
