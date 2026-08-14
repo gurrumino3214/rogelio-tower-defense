@@ -14,6 +14,10 @@ body {
     font-family: 'Arial', sans-serif;
 }
 
+.hidden {
+    display: none !important;
+}
+
 #gameContainer {
     position: relative;
     width: 100vw;
@@ -483,6 +487,53 @@ body {
     }
 }
 
+.menu-fog {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(180deg, rgba(20,20,40,0.3) 0%, transparent 50%, rgba(20,20,40,0.3) 100%);
+    animation: fogMove 20s infinite ease-in-out;
+}
+
+.menu-fog:nth-child(2) {
+    animation-delay: -7s;
+}
+
+.menu-fog:nth-child(3) {
+    animation-delay: -14s;
+}
+
+@keyframes fogMove {
+    0%, 100% {
+        transform: translateX(-10%) translateY(-10%);
+        opacity: 0.3;
+    }
+    50% {
+        transform: translateX(10%) translateY(10%);
+        opacity: 0.5;
+    }
+}
+
+.menu-light {
+    position: absolute;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(255,215,0,0.1) 0%, transparent 70%);
+    border-radius: 50%;
+    animation: lightPulse 5s infinite ease-in-out;
+}
+
+@keyframes lightPulse {
+    0%, 100% {
+        opacity: 0.3;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.6;
+        transform: scale(1.2);
+    }
+}
+
 /* Overlay de transición */
 .transition-overlay {
     position: fixed;
@@ -498,6 +549,10 @@ body {
 }
 
 .transition-overlay.active {
+    opacity: 1;
+}
+
+.transition-overlay.fade-in {
     opacity: 1;
 }
 
