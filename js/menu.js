@@ -161,47 +161,13 @@ function createModals(container) {
             <button class="modal-close" data-close="settings">×</button>
             <h2 class="modal-title">CONFIGURACIÓN</h2>
             <div class="modal-info">
-                <p class="modal-description">Ajusta las opciones del juego para mejorar tu experiencia. Puedes modificar el volumen, la calidad gráfica y otras preferencias.</p>
+                <p class="modal-description">Ajusta las opciones del juego para mejorar tu experiencia.</p>
             </div>
             <div class="settings-grid">
-                <div class="setting-item">
-                    <label class="setting-label">Volumen General</label>
-                    <div class="setting-control">
-                        <input type="range" id="settingVolume" min="0" max="100" value="80">
-                    </div>
-                </div>
-                <div class="setting-item">
-                    <label class="setting-label">Volumen Música</label>
-                    <div class="setting-control">
-                        <input type="range" id="settingMusic" min="0" max="100" value="60">
-                    </div>
-                </div>
-                <div class="setting-item">
-                    <label class="setting-label">Volumen Efectos</label>
-                    <div class="setting-control">
-                        <input type="range" id="settingSFX" min="0" max="100" value="80">
-                    </div>
-                </div>
                 <div class="setting-item">
                     <label class="setting-label">Pantalla Completa</label>
                     <div class="setting-control">
                         <input type="checkbox" id="settingFullscreen">
-                    </div>
-                </div>
-                <div class="setting-item">
-                    <label class="setting-label">Calidad Gráfica</label>
-                    <div class="setting-control">
-                        <select id="settingQuality">
-                            <option value="low">Baja</option>
-                            <option value="medium" selected>Media</option>
-                            <option value="high">Alta</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="setting-item">
-                    <label class="setting-label">Activar Partículas</label>
-                    <div class="setting-control">
-                        <input type="checkbox" id="settingParticles" checked>
                     </div>
                 </div>
                 <div class="setting-item">
@@ -211,51 +177,35 @@ function createModals(container) {
                     </div>
                 </div>
                 <div class="setting-item">
-                    <label class="setting-label">Idioma</label>
+                    <label class="setting-label">Efectos Visuales</label>
                     <div class="setting-control">
-                        <select id="settingLanguage">
-                            <option value="es" selected>Español</option>
-                            <option value="en">English</option>
-                        </select>
+                        <input type="checkbox" id="settingEffects" checked>
                     </div>
                 </div>
             </div>
-            <button class="settings-save-btn" id="btnSaveSettings">Guardar Configuración</button>
+            <button class="settings-save-btn" id="btnRestoreDefaults">🔄 Restaurar Valores Predeterminados</button>
+            <button class="settings-save-btn" id="btnSaveSettings" style="margin-top: 10px;">✓ Volver</button>
         </div>
     `;
     container.appendChild(settingsModal);
     
-    // Cómo jugar
+    // Cómo jugar - Tutorial
     const howtoModal = document.createElement('div');
     howtoModal.id = 'howtoModal';
     howtoModal.className = 'modal-overlay';
     howtoModal.innerHTML = `
-        <div class="modal-content">
+        <div class="modal-content" style="max-width: 900px;">
             <button class="modal-close" data-close="howto">×</button>
-            <h2 class="modal-title">CÓMO JUGAR</h2>
-            <div class="modal-info">
-                <p class="modal-description">Aprende a dominar el arte de la defensa de torres con estas guías esenciales. Sigue estos consejos para convertirte en un verdadero estratega.</p>
+            <h2 class="modal-title">TUTORIAL</h2>
+            <div id="tutorialPages" style="min-height: 400px;">
+                <!-- Las páginas se generan dinámicamente -->
             </div>
-            <div class="howto-section">
-                <h3 class="howto-title">🏗️ Cómo colocar torres</h3>
-                <p class="howto-text">Haz click en cualquier lugar del mapa para colocar una torre. Cada torre cuesta $50. Asegúrate de no colocarlas sobre el camino.</p>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
+                <button class="menu-btn" id="btnTutorialPrev" style="min-width: 120px; padding: 10px 20px;">◀ Anterior</button>
+                <span id="tutorialPageIndicator" style="color: #ffd700; font-size: 16px;">1 / 7</span>
+                <button class="menu-btn" id="btnTutorialNext" style="min-width: 120px; padding: 10px 20px;">Siguiente ▶</button>
             </div>
-            <div class="howto-section">
-                <h3 class="howto-title">💰 Cómo conseguir dinero</h3>
-                <p class="howto-text">Derrota enemigos para ganar dinero. Cada enemigo derrotado te da $10. Los enemigos más fuertes dan más recompensa.</p>
-            </div>
-            <div class="howto-section">
-                <h3 class="howto-title">⬆️ Cómo mejorar torres</h3>
-                <p class="howto-text">Haz click en una torre existente para ver opciones de mejora. Mejorar aumenta el daño y el rango de la torre.</p>
-            </div>
-            <div class="howto-section">
-                <h3 class="howto-title">⚔️ Cómo derrotar enemigos</h3>
-                <p class="howto-text">Las torres disparan automáticamente a los enemigos dentro de su rango. Coloca torres estratégicamente para cubrir todo el camino.</p>
-            </div>
-            <div class="howto-section">
-                <h3 class="howto-title">🛡️ Qué ocurre cuando llegan enemigos al final</h3>
-                <p class="howto-text">Si un enemigo llega al final del camino, pierdes una vida. Si llegas a 0 vidas, el juego termina.</p>
-            </div>
+            <button class="menu-btn" id="btnTutorialExit" style="margin-top: 15px; width: 100%;">Volver al Menú</button>
         </div>
     `;
     container.appendChild(howtoModal);
@@ -310,32 +260,36 @@ function createModals(container) {
     creditsModal.id = 'creditsModal';
     creditsModal.className = 'modal-overlay';
     creditsModal.innerHTML = `
-        <div class="modal-content">
+        <div class="modal-content" style="max-width: 500px;">
             <button class="modal-close" data-close="credits">×</button>
-            <h2 class="modal-title">CRÉDITOS</h2>
-            <div class="modal-info">
-                <p class="modal-description">Un agradecimiento especial a todas las personas que hicieron posible este juego. Cada línea de código y cada detalle fue creado con pasión.</p>
+            <h2 class="modal-title" style="font-size: 32px; margin-bottom: 10px;">ROGELIO TOWER DEFENSE</h2>
+            <div class="modal-info" style="margin-bottom: 30px;">
+                <p class="modal-description">Un agradecimiento especial a todas las personas que hicieron posible este juego.</p>
             </div>
-            <div class="credits-list">
-                <h3 class="credits-name">ROGELIO TOWER DEFENSE</h3>
+            <div class="credits-list" id="creditsContent">
+                <div class="credits-section" style="margin-bottom: 25px;">
+                    <h3 class="credits-role" style="color: #ffd700; font-size: 20px; margin-bottom: 10px;">DESARROLLO</h3>
+                    <p class="credits-name" style="color: #ffffff; font-size: 16px;">Gurrumino3214</p>
+                </div>
                 
-                <p class="credits-role">Desarrollado por</p>
-                <p class="credits-name">Gurrumino3214</p>
+                <div class="credits-section" style="margin-bottom: 25px;">
+                    <h3 class="credits-role" style="color: #ffd700; font-size: 20px; margin-bottom: 10px;">PROGRAMACIÓN</h3>
+                    <p class="credits-name" style="color: #ffffff; font-size: 16px;">HTML • CSS • JavaScript</p>
+                </div>
                 
-                <p class="credits-role">Programación</p>
-                <p class="credits-name">Gurrumino3214</p>
+                <div class="credits-section" style="margin-bottom: 25px;">
+                    <h3 class="credits-role" style="color: #ffd700; font-size: 20px; margin-bottom: 10px;">ARTE</h3>
+                    <p class="credits-name" style="color: #ffffff; font-size: 16px;">Pixel Art / Assets del proyecto</p>
+                </div>
                 
-                <p class="credits-role">Diseño</p>
-                <p class="credits-name">Gurrumino3214</p>
+                <div class="credits-section" style="margin-bottom: 25px;">
+                    <h3 class="credits-role" style="color: #ffd700; font-size: 20px; margin-bottom: 10px;">TECNOLOGÍAS</h3>
+                    <p class="credits-name" style="color: #ffffff; font-size: 16px;">HTML5 • CSS3 • JavaScript • Canvas API</p>
+                </div>
                 
-                <p class="credits-role">Arte</p>
-                <p class="credits-name">Gurrumino3214</p>
-                
-                <p class="credits-role">Música</p>
-                <p class="credits-name">Gurrumino3214</p>
-                
-                <p class="credits-thanks">¡Gracias por jugar!</p>
+                <p class="credits-thanks" style="color: #ffd700; font-size: 18px; margin-top: 30px;">¡Gracias por jugar!</p>
             </div>
+            <button class="menu-btn" id="btnCreditsExit" style="margin-top: 20px; width: 100%;">VOLVER AL MENÚ</button>
         </div>
     `;
     container.appendChild(creditsModal);
@@ -409,8 +363,19 @@ function setupMenuEvents() {
     document.getElementById('btnUpgrade')?.addEventListener('click', upgradeSelectedTower);
     document.getElementById('btnCloseUpgrade')?.addEventListener('click', closeTowerUpgradePanel);
     
-    // Botón guardar configuración
+    // Botón guardar configuración (Volver)
     document.getElementById('btnSaveSettings')?.addEventListener('click', saveSettings);
+    
+    // Botón restaurar valores predeterminados
+    document.getElementById('btnRestoreDefaults')?.addEventListener('click', restoreDefaultSettings);
+    
+    // Botones del tutorial
+    document.getElementById('btnTutorialPrev')?.addEventListener('click', () => showTutorialPage(currentTutorialPage - 1));
+    document.getElementById('btnTutorialNext')?.addEventListener('click', () => showTutorialPage(currentTutorialPage + 1));
+    document.getElementById('btnTutorialExit')?.addEventListener('click', () => closeModal('howto'));
+    
+    // Botón de créditos
+    document.getElementById('btnCreditsExit')?.addEventListener('click', () => closeModal('credits'));
     
     // Cerrar modales
     document.querySelectorAll('.modal-close').forEach(btn => {
@@ -427,6 +392,9 @@ function setupMenuEvents() {
 // ==========================================
 // MANEJADOR DE TECLAS
 // ==========================================
+let currentTutorialPage = 1;
+const totalTutorialPages = 7;
+
 function handleKeyDown(e) {
     // Escape - Pausa o cerrar modal
     if (e.key === 'Escape') {
@@ -436,6 +404,14 @@ function handleKeyDown(e) {
         } else if (gameState === 'PLAYING') {
             togglePause();
         }
+    }
+    
+    // Flechas para tutorial
+    if (e.key === 'ArrowLeft' && document.getElementById('howtoModal')?.classList.contains('active')) {
+        showTutorialPage(currentTutorialPage - 1);
+    }
+    if (e.key === 'ArrowRight' && document.getElementById('howtoModal')?.classList.contains('active')) {
+        showTutorialPage(currentTutorialPage + 1);
     }
     
     // Enter - Confirmar
@@ -585,14 +561,9 @@ function playSound(type) {
 // ==========================================
 function saveSettings() {
     const settings = {
-        volume: document.getElementById('settingVolume').value,
-        music: document.getElementById('settingMusic').value,
-        sfx: document.getElementById('settingSFX').value,
         fullscreen: document.getElementById('settingFullscreen').checked,
-        quality: document.getElementById('settingQuality').value,
-        particles: document.getElementById('settingParticles').checked,
         showFPS: document.getElementById('settingFPS').checked,
-        language: document.getElementById('settingLanguage').value
+        effects: document.getElementById('settingEffects').checked
     };
     
     localStorage.setItem('rogelioTD_settings', JSON.stringify(settings));
@@ -606,30 +577,36 @@ function saveSettings() {
     console.log('[SETTINGS] Configuración guardada');
 }
 
+function restoreDefaultSettings() {
+    document.getElementById('settingFullscreen').checked = false;
+    document.getElementById('settingFPS').checked = false;
+    document.getElementById('settingEffects').checked = true;
+    
+    playSound('click');
+    console.log('[SETTINGS] Valores restaurados');
+}
+
 function loadSettings() {
     const saved = localStorage.getItem('rogelioTD_settings');
     if (saved) {
         const settings = JSON.parse(saved);
         
-        document.getElementById('settingVolume').value = settings.volume || 80;
-        document.getElementById('settingMusic').value = settings.music || 60;
-        document.getElementById('settingSFX').value = settings.sfx || 80;
         document.getElementById('settingFullscreen').checked = settings.fullscreen || false;
-        document.getElementById('settingQuality').value = settings.quality || 'medium';
-        document.getElementById('settingParticles').checked = settings.particles !== false;
         document.getElementById('settingFPS').checked = settings.showFPS || false;
-        document.getElementById('settingLanguage').value = settings.language || 'es';
+        document.getElementById('settingEffects').checked = settings.effects !== false;
         
         applySettings(settings);
     }
 }
 
 function applySettings(settings) {
-    isMuted = settings.volume == 0;
-    
     if (settings.fullscreen) {
         document.documentElement.requestFullscreen().catch(() => {});
     }
+    
+    // Guardar estado de efectos visuales para el juego
+    window.visualEffectsEnabled = settings.effects !== false;
+    window.showFPSEnabled = settings.showFPS || false;
 }
 
 // ==========================================
@@ -676,6 +653,248 @@ function incrementStat(statName, value = 1) {
     stats[statName] = (stats[statName] || 0) + value;
     saveStats(stats);
 }
+
+// ==========================================
+// TUTORIAL - PÁGINAS Y NAVEGACIÓN
+// ==========================================
+const tutorialPagesData = [
+    {
+        title: "📜 OBJETIVO DEL JUEGO",
+        content: `
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: center;">
+                <div>
+                    <h3 style="color: #ffd700; margin-bottom: 15px;">¿Qué es Rogelio Tower Defense?</h3>
+                    <p style="color: #cccccc; line-height: 1.6; margin-bottom: 15px;">
+                        Rogelio Tower Defense es un juego de estrategia donde debes defender tu reino de las hordas enemigas utilizando torres estratégicamente colocadas.
+                    </p>
+                    <h3 style="color: #44ff44; margin-bottom: 10px;">✅ Cómo Ganar</h3>
+                    <p style="color: #cccccc; line-height: 1.6;">
+                        Sobrevive a todas las oleadas de enemigos. Si logras llegar a la última oleada y derrotar al jefe final Rogelio, ¡habrás ganado!
+                    </p>
+                    <h3 style="color: #ff4444; margin-bottom: 10px; margin-top: 15px;">❌ Condición de Derrota</h3>
+                    <p style="color: #cccccc; line-height: 1.6;">
+                        Si los enemigos llegan al final del camino, pierdes vidas. Cuando llegues a 0 vidas, el juego termina.
+                    </p>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-size: 80px;">🏰</div>
+                    <p style="color: #ffd700; margin-top: 10px;">¡Defiende tu Reino!</p>
+                </div>
+            </div>
+        `
+    },
+    {
+        title: "🗼 TORRES DISPONIBLES",
+        content: `
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+                <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; text-align: center; border: 1px solid #ffd700;">
+                    <div style="font-size: 40px;">🎯</div>
+                    <h4 style="color: #ffd700; margin: 10px 0;">Torre Básica</h4>
+                    <p style="color: #aaaaaa; font-size: 13px;">Daño: 25 | Rango: Medio</p>
+                    <p style="color: #cccccc; font-size: 12px;">Torre equilibrada para empezar</p>
+                </div>
+                <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; text-align: center; border: 1px solid #ff6b6b;">
+                    <div style="font-size: 40px;">💥</div>
+                    <h4 style="color: #ff6b6b; margin: 10px 0;">Torre Explosiva</h4>
+                    <p style="color: #aaaaaa; font-size: 13px;">Daño: 50 | Rango: Corto</p>
+                    <p style="color: #cccccc; font-size: 12px;">Alto daño en área</p>
+                </div>
+                <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; text-align: center; border: 1px solid #4ecdc4;">
+                    <div style="font-size: 40px;">❄️</div>
+                    <h4 style="color: #4ecdc4; margin: 10px 0;">Torre de Hielo</h4>
+                    <p style="color: #aaaaaa; font-size: 13px;">Daño: 15 | Rango: Largo</p>
+                    <p style="color: #cccccc; font-size: 12px;">Ralentiza enemigos</p>
+                </div>
+            </div>
+            <p style="color: #cccccc; text-align: center; margin-top: 20px; line-height: 1.6;">
+                Cada torre cuesta 💰50 monedas iniciales. Puedes mejorarlas para aumentar su efectividad.
+            </p>
+        `
+    },
+    {
+        title: "🏗️ CÓMO COLOCAR TORRES",
+        content: `
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px;">
+                <div style="text-align: center;">
+                    <div style="font-size: 30px; background: #ffd700; color: #0a0a0f; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px;">1</div>
+                    <p style="color: #ffffff; font-size: 13px;">Selecciona una torre</p>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-size: 30px; background: #ffd700; color: #0a0a0f; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px;">2</div>
+                    <p style="color: #ffffff; font-size: 13px;">Busca posición válida</p>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-size: 30px; background: #ffd700; color: #0a0a0f; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px;">3</div>
+                    <p style="color: #ffffff; font-size: 13px;">Haz click para colocar</p>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-size: 30px; background: #ffd700; color: #0a0a0f; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px;">4</div>
+                    <p style="color: #ffffff; font-size: 13px;">La torre atacará automáticamente</p>
+                </div>
+            </div>
+            <div style="background: rgba(255,215,0,0.1); padding: 15px; border-radius: 8px; border-left: 4px solid #ffd700;">
+                <p style="color: #cccccc; line-height: 1.6;">
+                    <strong style="color: #ffd700;">💡 Consejo:</strong> No puedes colocar torres sobre el camino. Busca zonas verdes o áreas destacadas en el mapa. 
+                    Las torres tienen un rango de ataque circular que se muestra al seleccionarlas.
+                </p>
+            </div>
+        `
+    },
+    {
+        title: "⬆️ MEJORAR TORRES",
+        content: `
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div>
+                    <h3 style="color: #ffd700; margin-bottom: 15px;">¿Cómo Mejorar?</h3>
+                    <ol style="color: #cccccc; line-height: 2; padding-left: 20px;">
+                        <li>Haz click en una torre existente</li>
+                        <li>Se abrirá el panel de mejora</li>
+                        <li>Haz click en "Mejorar" si tienes suficiente dinero</li>
+                        <li>¡Tu torre será más poderosa!</li>
+                    </ol>
+                </div>
+                <div>
+                    <h3 style="color: #44ff44; margin-bottom: 15px;">Beneficios por Nivel</h3>
+                    <div style="background: rgba(68,255,68,0.1); padding: 15px; border-radius: 8px;">
+                        <p style="color: #ffffff; margin: 5px 0;">➕ Daño: +50% por nivel</p>
+                        <p style="color: #ffffff; margin: 5px 0;">⚡ Velocidad: +15% por nivel</p>
+                        <p style="color: #ffd700; margin: 10px 0 5px 0;">💰 Costo: Nivel × 50</p>
+                    </div>
+                </div>
+            </div>
+            <p style="color: #cccccc; text-align: center; margin-top: 20px; line-height: 1.6;">
+                Puedes mejorar hasta <strong style="color: #ffd700;">Nivel 5 (MÁX)</strong>. ¡Planifica bien tus mejoras!
+            </p>
+        `
+    },
+    {
+        title: "👹 ENEMIGOS",
+        content: `
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+                <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 40px;">👾</div>
+                    <h4 style="color: #ffffff; margin: 10px 0;">Enemigo Básico</h4>
+                    <p style="color: #aaaaaa; font-size: 12px;">Vida: Baja | Velocidad: Media</p>
+                    <p style="color: #cccccc; font-size: 11px;">El enemigo más común</p>
+                </div>
+                <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 40px;">🛡️</div>
+                    <h4 style="color: #ff6b6b; margin: 10px 0;">Enemigo Blindado</h4>
+                    <p style="color: #aaaaaa; font-size: 12px;">Vida: Alta | Velocidad: Lenta</p>
+                    <p style="color: #cccccc; font-size: 11px;">Resistente pero lento</p>
+                </div>
+                <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 40px;">⚡</div>
+                    <h4 style="color: #4ecdc4; margin: 10px 0;">Enemigo Rápido</h4>
+                    <p style="color: #aaaaaa; font-size: 12px;">Vida: Media | Velocidad: Alta</p>
+                    <p style="color: #cccccc; font-size: 11px;">Difícil de alcanzar</p>
+                </div>
+            </div>
+            <p style="color: #cccccc; text-align: center; margin-top: 20px; line-height: 1.6;">
+                Cada tipo de enemigo requiere una estrategia diferente. ¡Adapta tus torres según la oleada!
+            </p>
+        `
+    },
+    {
+        title: "🌊 OLEADAS",
+        content: `
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: center;">
+                <div>
+                    <h3 style="color: #ffd700; margin-bottom: 15px;">¿Qué son las Oleadas?</h3>
+                    <p style="color: #cccccc; line-height: 1.6; margin-bottom: 15px;">
+                        Las oleadas son grupos de enemigos que atacan secuencialmente. Cada oleada es más difícil que la anterior.
+                    </p>
+                    <h3 style="color: #44ff44; margin-bottom: 10px;">Entre Oleadas</h3>
+                    <ul style="color: #cccccc; line-height: 1.8; padding-left: 20px;">
+                        <li>Tienes tiempo para prepararte</li>
+                        <li>Coloca más torres</li>
+                        <li>Mejora las existentes</li>
+                        <li>Planifica tu estrategia</li>
+                    </ul>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-size: 80px;">🌊</div>
+                    <p style="color: #ffd700; margin-top: 10px; font-size: 24px;">Oleada <span style="color: #ffffff;">1</span> de <span style="color: #ffffff;">∞</span></p>
+                    <p style="color: #aaaaaa; margin-top: 5px;">¡Prepárate!</p>
+                </div>
+            </div>
+            <div style="background: rgba(255,215,0,0.1); padding: 15px; border-radius: 8px; border-left: 4px solid #ffd700; margin-top: 20px;">
+                <p style="color: #cccccc; line-height: 1.6;">
+                    <strong style="color: #ffd700;">💡 Consejo:</strong> Usa el tiempo entre oleadas sabiamente. Una buena preparación puede marcar la diferencia entre la victoria y la derrota.
+                </p>
+            </div>
+        `
+    },
+    {
+        title: "👑 ROGELIO - JEFE FINAL",
+        content: `
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: center;">
+                <div style="text-align: center;">
+                    <div style="font-size: 100px;">👹</div>
+                    <p style="color: #ff4444; margin-top: 10px; font-size: 24px; font-weight: bold;">ROGELIO</p>
+                    <p style="color: #aaaaaa;">El Jefe Final</p>
+                </div>
+                <div>
+                    <h3 style="color: #ff4444; margin-bottom: 15px;">El Desafío Definitivo</h3>
+                    <p style="color: #cccccc; line-height: 1.6; margin-bottom: 15px;">
+                        Rogelio es el jefe final más poderoso. Aparece en la última oleada con estadísticas masivas.
+                    </p>
+                    <div style="background: rgba(255,68,68,0.1); padding: 15px; border-radius: 8px; border: 1px solid #ff4444;">
+                        <p style="color: #ff4444; margin: 5px 0;"><strong>❤️ Vida Enorme</strong></p>
+                        <p style="color: #ff4444; margin: 5px 0;"><strong>⚔️ Daño Devastador</strong></p>
+                        <p style="color: #ff4444; margin: 5px 0;"><strong>🛡️ Resistencia Extrema</strong></p>
+                    </div>
+                </div>
+            </div>
+            <div style="background: rgba(255,215,0,0.1); padding: 15px; border-radius: 8px; border-left: 4px solid #ffd700; margin-top: 20px;">
+                <p style="color: #cccccc; line-height: 1.6;">
+                    <strong style="color: #ffd700;">💡 Estrategia:</strong> Para derrotar a Rogelio necesitas torres de alto nivel, buena distribución y muchas mejoras. ¡No escatimes en recursos!
+                </p>
+            </div>
+        `
+    }
+];
+
+function showTutorialPage(pageNum) {
+    // Limitar página entre 1 y totalTutorialPages
+    if (pageNum < 1) pageNum = 1;
+    if (pageNum > totalTutorialPages) pageNum = totalTutorialPages;
+    
+    currentTutorialPage = pageNum;
+    
+    const container = document.getElementById('tutorialPages');
+    const indicator = document.getElementById('tutorialPageIndicator');
+    const prevBtn = document.getElementById('btnTutorialPrev');
+    const nextBtn = document.getElementById('btnTutorialNext');
+    
+    if (container && indicator) {
+        // Actualizar contenido
+        const pageData = tutorialPagesData[pageNum - 1];
+        container.innerHTML = `
+            <div style="animation: fadeIn 0.3s ease;">
+                <h3 style="color: #ffd700; font-size: 24px; margin-bottom: 20px; text-align: center;">${pageData.title}</h3>
+                ${pageData.content}
+            </div>
+        `;
+        
+        // Actualizar indicador
+        indicator.textContent = `${pageNum} / ${totalTutorialPages}`;
+        
+        // Actualizar estado de botones
+        if (prevBtn) prevBtn.disabled = pageNum === 1;
+        if (nextBtn) nextBtn.disabled = pageNum === totalTutorialPages;
+    }
+}
+
+// Añadir animación CSS para fade in del tutorial
+const tutorialStyle = document.createElement('style');
+tutorialStyle.textContent = `
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateX(20px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+`;
+document.head.appendChild(tutorialStyle);
 
 // ==========================================
 // TRANSICIONES
@@ -942,3 +1161,20 @@ window.menuAPI = {
     gameState: () => gameState,
     showTowerUpgradePanel: showTowerUpgradePanel
 };
+
+// Inicializar la primera página del tutorial cuando se abre el modal
+const howtoModalElement = document.getElementById('howtoModal');
+if (howtoModalElement) {
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            if (mutation.attributeName === 'class') {
+                if (howtoModalElement.classList.contains('active')) {
+                    // Mostrar primera página cuando se abre el modal
+                    showTutorialPage(1);
+                }
+            }
+        });
+    });
+    
+    observer.observe(howtoModalElement, { attributes: true });
+}
