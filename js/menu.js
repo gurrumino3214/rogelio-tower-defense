@@ -77,27 +77,44 @@ function createMenuElements() {
     gameUI.className = 'hud';
     gameUI.innerHTML = `
         <div class="hud-top">
-            <div class="hud-stat">
-                <div class="hud-stat-icon">❤️</div>
-                <span id="hudLives">10</span>
-            </div>
-            <div class="hud-stat">
-                <div class="hud-stat-icon">🌊</div>
-                <span id="hudWave">1</span>
-            </div>
-            <div class="hud-stat">
-                <div class="hud-stat-icon">⏱️</div>
-                <span id="hudTime">0:00</span>
-            </div>
-            <div class="hud-stat">
-                <div class="hud-stat-icon">💰</div>
-                <span id="hudMoney">100</span>
+            <div class="hud-stats">
+                <div class="hud-stat">
+                    <div class="hud-stat-icon">❤️</div>
+                    <span id="hudLives">10</span>
+                </div>
+                <div class="hud-stat">
+                    <div class="hud-stat-icon">👹</div>
+                    <span id="hudEnemies">0</span>
+                </div>
+                <div class="hud-stat">
+                    <div class="hud-stat-icon">🌊</div>
+                    <span id="hudWave">1</span>
+                </div>
+                <div class="hud-stat">
+                    <div class="hud-stat-icon">⏱️</div>
+                    <span id="hudTime">0:00</span>
+                </div>
+                <div class="hud-stat">
+                    <div class="hud-stat-icon">💰</div>
+                    <span id="hudMoney">100</span>
+                </div>
             </div>
             <div class="hud-controls">
                 <button class="hud-btn" id="btnPause">⏸ Pausa</button>
                 <button class="hud-btn" id="btnSpeed">⏩ x1</button>
                 <button class="hud-btn" id="btnRestart">🔄 Reiniciar</button>
                 <button class="hud-btn" id="btnMenu">🏠 Salir</button>
+            </div>
+        </div>
+        <div id="towerUpgradePanel" class="tower-upgrade-panel" style="display: none;">
+            <div class="upgrade-info">
+                <h3 id="upgradeTitle">Torre Nivel 1</h3>
+                <p id="upgradeStats">Daño: 25 | Velocidad: 1.0</p>
+                <p id="upgradeCost">Costo: 50 💰</p>
+            </div>
+            <div class="upgrade-buttons">
+                <button class="upgrade-btn" id="btnUpgrade">⬆ Mejorar</button>
+                <button class="upgrade-btn" id="btnCloseUpgrade">❌ Cerrar</button>
             </div>
         </div>
     `;
@@ -387,6 +404,10 @@ function setupMenuEvents() {
     document.getElementById('btnSpeed')?.addEventListener('click', toggleSpeed);
     document.getElementById('btnRestart')?.addEventListener('click', restartGame);
     document.getElementById('btnMenu')?.addEventListener('click', showMainMenu);
+    
+    // Botones del panel de mejora de torre
+    document.getElementById('btnUpgrade')?.addEventListener('click', upgradeSelectedTower);
+    document.getElementById('btnCloseUpgrade')?.addEventListener('click', closeTowerUpgradePanel);
     
     // Botón guardar configuración
     document.getElementById('btnSaveSettings')?.addEventListener('click', saveSettings);
@@ -833,12 +854,77 @@ function updateHUD() {
     document.getElementById('hudWave').textContent = player.wave;
     document.getElementById('hudMoney').textContent = player.money;
     
+    // Actualizar número de enemigos vivos
+    const enemyCount = typeof enemies !== 'undefined' ? enemies.length : 0;
+    const bossCount = (typeof bossRogelio !== 'undefined' && bossRogelio && typeof bossActive !== 'undefined' && bossActive) ? 1 : 0;
+    document.getElementById('hudEnemies').textContent = enemyCount + bossCount;
+    
     // Actualizar tiempo jugado
     const stats = JSON.parse(localStorage.getItem('rogelioTD_stats') || '{}');
     const timePlayed = stats.timePlayed || 0;
     const minutes = Math.floor(timePlayed / 60);
     const seconds = Math.floor(timePlayed % 60);
     document.getElementById('hudTime').textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+}
+
+// ==========================================
+// MEJORA DE TORRES
+// ==========================================
+let selectedTowerForUpgrade = null;
+
+function showTowerUpgradePanel(tower) {
+    selectedTowerForUpgrade = tower;
+    const panel = document.getElementById('towerUpgradePanel');
+    const title = document.getElementById('upgradeTitle');
+    const stats = document.getElementById('upgradeStats');
+    const cost = document.getElementById('upgradeCost');
+    const upgradeBtn = document.getElementById('btnUpgrade');
+    
+    if (tower.level >= 5) {
+        title.textContent = 'Torre Nivel MAX';
+        stats.textContent = `Daño: ${Math.floor(tower.damage)} | Velocidad: ${(1000/tower.fireRate).toFixed(1)}`;
+        cost.textContent = 'Nivel Máximo Alcanzado';
+        upgradeBtn.disabled = true;
+        upgradeBtn.textContent = '✅ MAX';
+    } else {
+        const upgradeCost = tower.level * 50;
+        title.textContent = `Torre Nivel ${tower.level}`;
+        stats.textContent = `Daño: ${Math.floor(tower.damage)} | Velocidad: ${(1000/tower.fireRate).toFixed(1)}/s`;
+        cost.textContent = `Costo: ${upgradeCost} 💰`;
+        upgradeBtn.disabled = false;
+        upgradeBtn.textContent = player.money >= upgradeCost ? '⬆ Mejorar' : '💰 Insuficiente';
+    }
+    
+    panel.style.display = 'block';
+}
+
+function closeTowerUpgradePanel() {
+    const panel = document.getElementById('towerUpgradePanel');
+    panel.style.display = 'none';
+    selectedTowerForUpgrade = null;
+}
+
+function upgradeSelectedTower() {
+    if (!selectedTowerForUpgrade || selectedTowerForUpgrade.level >= 5) return;
+    
+    const upgradeCost = selectedTowerForUpgrade.level * 50;
+    if (player.money >= upgradeCost) {
+        player.money -= upgradeCost;
+        selectedTowerForUpgrade.level++;
+        // Aumentar daño en 50% por nivel
+        selectedTowerForUpgrade.damage = Math.floor(selectedTowerForUpgrade.damage * 1.5);
+        // Reducir fireRate (más rápido) en 15% por nivel
+        selectedTowerForUpgrade.fireRate = Math.max(200, Math.floor(selectedTowerForUpgrade.fireRate * 0.85));
+        
+        // Actualizar HUD y panel
+        updateHUD();
+        showTowerUpgradePanel(selectedTowerForUpgrade);
+        
+        // Incrementar estadística
+        if (window.menuAPI) {
+            window.menuAPI.incrementStat('upgradesPerformed');
+        }
+    }
 }
 
 // ==========================================
@@ -849,5 +935,6 @@ window.menuAPI = {
     updateHUD: updateHUD,
     incrementStat: incrementStat,
     showMainMenu: showMainMenu,
-    gameState: () => gameState
+    gameState: () => gameState,
+    showTowerUpgradePanel: showTowerUpgradePanel
 };
