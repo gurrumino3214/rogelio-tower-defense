@@ -18,6 +18,12 @@ Rogelio Tower Defense es un juego estratégico donde debes colocar torres para d
 
 ## 🚀 Instalación y Uso
 
+### 🎮 ¡JUGAR AHORA! 
+
+[![Jugar Rogelio Tower Defense](https://img.shields.io/badge/🎮-JUGAR%20AHORA-brightgreen?style=for-the-badge&logo=html5)](https://rawcdn.githack.com/USER/REPO/main/index.html)
+
+> **Haz clic en el botón de arriba** para jugar directamente en tu navegador (si estás en GitHub, copia la URL de `index.html` y ábrela localmente).
+
 ### Opción 1: Servidor Local Recomendado
 
 Para una experiencia óptima (carga correcta de assets):
