@@ -818,6 +818,10 @@ function showMainMenu() {
         gameState = 'MENU';
         menuElements.pauseMenu.classList.remove('active');
         menuElements.gameUI.classList.remove('active');
+        
+        // Mostrar menú principal correctamente
+        menuElements.mainMenu.classList.remove('hidden');
+        menuElements.background.classList.remove('hidden');
         menuElements.mainMenu.style.display = 'flex';
         menuElements.background.style.display = 'block';
         
