@@ -228,7 +228,7 @@ let worldHeight = 1536;
 let camera = {
     x: 0,
     y: 0,
-    zoom: 0.45,  // Zoom reducido para mostrar el mapa completo
+    zoom: 1.0,  // Zoom a pantalla completa para que el mapa se vea completo
     width: 0,
     height: 0
 };
