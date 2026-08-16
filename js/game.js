@@ -241,19 +241,19 @@ function initCamera() {
     camera.y = (worldHeight - camera.height) / 2;
 }
 
-// Convertir coordenadas del mundo a coordenadas de pantalla
+// Convertir coordenadas del mundo a coordenadas de pantalla (ahora es directo porque scale=1, offsetX=0, offsetY=0)
 function worldToScreen(worldX, worldY) {
     return {
-        x: (worldX - camera.x) * camera.zoom,
-        y: (worldY - camera.y) * camera.zoom
+        x: (worldX - camera.x),
+        y: (worldY - camera.y)
     };
 }
 
-// Convertir coordenadas de pantalla a coordenadas del mundo
+// Convertir coordenadas de pantalla a coordenadas del mundo (ahora es directo porque scale=1, offsetX=0, offsetY=0)
 function screenToWorld(screenX, screenY) {
     return {
-        x: (screenX / camera.zoom) + camera.x,
-        y: (screenY / camera.zoom) + camera.y
+        x: screenX + camera.x,
+        y: screenY + camera.y
     };
 }
 
@@ -360,20 +360,10 @@ function resizeCanvas() {
     canvas.width = displayWidth;
     canvas.height = displayHeight;
     
-    // Calcular factor de escala manteniendo aspect ratio
-    const windowAspectRatio = displayWidth / displayHeight;
-    
-    if (windowAspectRatio > INTERNAL_ASPECT_RATIO) {
-        // Ventana más ancha que el juego - pillarboxing (barras laterales)
-        scale = displayHeight / INTERNAL_HEIGHT;
-        offsetX = (displayWidth - INTERNAL_WIDTH * scale) / 2;
-        offsetY = 0;
-    } else {
-        // Ventana más alta que el juego - letterboxing (barras superior/inferior)
-        scale = displayWidth / INTERNAL_WIDTH;
-        offsetX = 0;
-        offsetY = (displayHeight - INTERNAL_HEIGHT * scale) / 2;
-    }
+    // Forzar escala 1:1 para pantalla completa sin letterboxing
+    scale = 1;
+    offsetX = 0;
+    offsetY = 0;
     
     // Actualizar cámara con las nuevas dimensiones internas
     initPath();
@@ -394,11 +384,11 @@ window.screenToWorld = screenToWorld;
 window.screenToInternal = screenToInternal;
 window.WaveManager = WaveManager;
 
-// Función auxiliar para convertir coordenadas de pantalla a coordenadas internas del juego
+// Función auxiliar para convertir coordenadas de pantalla a coordenadas internas del juego (ahora es directo porque scale=1, offsetX=0, offsetY=0)
 function screenToInternal(screenX, screenY) {
     return {
-        x: (screenX - offsetX) / scale,
-        y: (screenY - offsetY) / scale
+        x: screenX,
+        y: screenY
     };
 }
 
@@ -998,17 +988,8 @@ function draw() {
     ctx.fillStyle = '#0a0a0f';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    // 2. Aplicar transformaciones de escalado responsive y cámara
+    // 2. Aplicar transformaciones de cámara
     ctx.save();
-    
-    // Aplicar offset para centrar el juego (letterboxing/pillarboxing)
-    ctx.translate(offsetX, offsetY);
-    
-    // Aplicar escala responsive
-    ctx.scale(scale, scale);
-    
-    // Aplicar zoom de la cámara
-    ctx.scale(camera.zoom, camera.zoom);
     
     // Aplicar screen shake
     if (screenShakeIntensity > 0) {
