@@ -393,6 +393,10 @@ function handleClick(e) {
     if (gameState === 'MENU') {
         // El menú ahora maneja esto, no iniciar directamente
         return;
+    } else if (storyScreenVisible) {
+        // Manejar click en pantalla de historia
+        handleStoryClick(screenX, screenY);
+        return;
     } else if (gameState === 'PLAYING') {
         // Si estamos mostrando el menú de selección de tipo de torre
         if (showTowerTypeMenu && pendingTowerPosition) {
@@ -1422,6 +1426,9 @@ function drawUI() {
     if (gameState === 'MENU') {
         // El menú principal se maneja por menu.js
         // Esta sección ya no se usa porque el menú es HTML/CSS
+    } else if (storyScreenVisible) {
+        // Pantalla de introducción de historia
+        drawStoryScreen();
     } else if (gameState === 'PLAYING') {
         // El HUD se maneja por menu.js
         // Solo actualizamos los valores
@@ -1595,7 +1602,14 @@ let victoryLevel = 0;
 
 function showVictoryScreen(level) {
     victoryLevel = level;
-    gameState = 'VICTORY';
+    
+    // Verificar si es el nivel final (50)
+    if (isFinalLevel(level)) {
+        // Mostrar pantalla de campaña completada en lugar de victoria normal
+        gameState = 'CAMPAIGN_COMPLETE';
+    } else {
+        gameState = 'VICTORY';
+    }
     
     // Guardar victoria en estadísticas
     if (window.menuAPI) {
@@ -1635,22 +1649,24 @@ function drawVictoryScreen() {
     ctx.textAlign = 'center';
     ctx.fillText('VOLVER AL MENÚ', canvas.width / 2, menuBtnY + 32);
     
-    // Botón SIGUIENTE NIVEL
-    const nextBtnX = canvas.width / 2 - 160;
-    const nextBtnY = canvas.height / 2 + 110;
-    const nextBtnWidth = 300;
-    const nextBtnHeight = 50;
-    
-    ctx.fillStyle = '#4CAF50';
-    ctx.fillRect(nextBtnX, nextBtnY, nextBtnWidth, nextBtnHeight);
-    ctx.strokeStyle = '#81C784';
-    ctx.lineWidth = 3;
-    ctx.strokeRect(nextBtnX, nextBtnY, nextBtnWidth, nextBtnHeight);
-    
-    ctx.fillStyle = '#FFFFFF';
-    ctx.font = 'bold 18px Arial, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('SIGUIENTE NIVEL', canvas.width / 2, nextBtnY + 32);
+    // Botón SIGUIENTE NIVEL (solo si no es el nivel 50)
+    if (victoryLevel < 50) {
+        const nextBtnX = canvas.width / 2 - 160;
+        const nextBtnY = canvas.height / 2 + 110;
+        const nextBtnWidth = 300;
+        const nextBtnHeight = 50;
+        
+        ctx.fillStyle = '#4CAF50';
+        ctx.fillRect(nextBtnX, nextBtnY, nextBtnWidth, nextBtnHeight);
+        ctx.strokeStyle = '#81C784';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(nextBtnX, nextBtnY, nextBtnWidth, nextBtnHeight);
+        
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = 'bold 18px Arial, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('SIGUIENTE NIVEL', canvas.width / 2, nextBtnY + 32);
+    }
 }
 
 function handleVictoryClick(e) {

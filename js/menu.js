@@ -1038,11 +1038,15 @@ function getDifficultyColor(type) {
 // ==========================================
 // SELECCIONAR NIVEL
 // ==========================================
+let pendingLevel = null; // Nivel pendiente de mostrar historia
+
 function selectLevel(level) {
     playSound('click');
     currentLevel = level;
     closeModal('levelSelect');
-    startGameFromMenu();
+    
+    // Mostrar pantalla de introducción de historia antes de comenzar el nivel
+    showStoryScreen(level);
 }
 
 
@@ -1145,6 +1149,33 @@ function fadeTransition(callback) {
 // ==========================================
 // ACCIONES DEL MENÚ
 // ==========================================
+
+// Variables para pantalla de historia
+let storyScreenVisible = false;
+let storyScreenLevel = 0;
+
+// Mostrar pantalla de introducción de historia
+function showStoryScreen(level) {
+    pendingLevel = level;
+    storyScreenLevel = level;
+    storyScreenVisible = true;
+    
+    // Obtener historia del nivel
+    const story = getLevelStory(level);
+    
+    console.log('[STORY] Mostrando introducción para Nivel ' + level + ': ' + story.title);
+}
+
+// Continuar desde pantalla de historia al juego
+function continueFromStory() {
+    if (pendingLevel !== null) {
+        currentLevel = pendingLevel;
+        pendingLevel = null;
+        storyScreenVisible = false;
+        startGameFromMenu();
+    }
+}
+
 function startGameFromMenu() {
     fadeTransition(() => {
         initAudio();
