@@ -1,5 +1,1 @@
-```
-# Logs and temp files
-*.log
-server.log
-```
+(js/game.js is a source file, no build artifacts, dependencies, or temp files in the changes)

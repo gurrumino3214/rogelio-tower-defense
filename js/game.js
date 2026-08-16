@@ -1295,40 +1295,117 @@ function drawDecorations() {
         const centerY = deco.y + deco.height / 2;
         const radius = deco.width / 2.5;
         
-        // Dibujar círculo de color según tipo con variación
-        let color = '#888888';
-        let darkColor = '#666666';
-        if (deco.type.includes('tree')) {
-            color = '#2E7D32';
-            darkColor = '#1B5E20';
+        // Dibujar según tipo con formas específicas
+        if (deco.type.includes('rock')) {
+            // Piedra: Polígono irregular gris con forma cuadrada/angulosa
+            ctx.save();
+            ctx.translate(centerX, centerY);
+            ctx.rotate(deco.angle || 0);
+            
+            const size = radius * 1.8;
+            const irregularity = 0.3;
+            
+            // Sombra
+            ctx.fillStyle = 'rgba(0,0,0,0.3)';
+            ctx.beginPath();
+            ctx.moveTo(-size/2 + 3, -size/2 + 3);
+            ctx.lineTo(size/2 + 3, -size/2 + 5 + Math.random() * irregularity * size);
+            ctx.lineTo(size/2 + 5 + Math.random() * irregularity * size, size/2 + 3);
+            ctx.lineTo(-size/2 + 5 + Math.random() * irregularity * size, size/2 + 5);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Cuerpo principal de la piedra (forma cuadrada irregular)
+            ctx.fillStyle = '#9E9E9E';
+            ctx.strokeStyle = '#616161';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(-size/2, -size/2);
+            ctx.lineTo(size/2, -size/2 + Math.sin(deco.angle || 0) * irregularity * size);
+            ctx.lineTo(size/2 + Math.cos(deco.angle || 0) * irregularity * size, size/2);
+            ctx.lineTo(-size/2 + Math.sin(deco.angle || 0) * irregularity * size, size/2);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+            
+            // Brillo/detalles
+            ctx.fillStyle = 'rgba(255,255,255,0.4)';
+            ctx.beginPath();
+            ctx.arc(-size/4, -size/4, size/6, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.restore();
         } else if (deco.type.includes('bush')) {
-            color = '#4CAF50';
-            darkColor = '#2E7D32';
-        } else if (deco.type.includes('rock')) {
-            color = '#9E9E9E';
-            darkColor = '#616161';
-        } else if (deco.type.includes('flower')) {
-            color = '#E91E63';
-            darkColor = '#C2185B';
+            // Arbusto: Grupo de círculos verdes redondos
+            ctx.save();
+            ctx.translate(centerX, centerY);
+            
+            const baseRadius = radius;
+            const circles = [
+                {x: 0, y: 0, r: baseRadius},
+                {x: -baseRadius*0.6, y: baseRadius*0.4, r: baseRadius*0.7},
+                {x: baseRadius*0.6, y: baseRadius*0.4, r: baseRadius*0.7},
+                {x: 0, y: -baseRadius*0.5, r: baseRadius*0.6},
+                {x: -baseRadius*0.3, y: -baseRadius*0.6, r: baseRadius*0.5}
+            ];
+            
+            // Sombra del arbusto completo
+            ctx.fillStyle = 'rgba(0,0,0,0.2)';
+            ctx.beginPath();
+            circles.forEach((c, i) => {
+                const x = c.x + 2;
+                const y = c.y + 2;
+                if (i === 0) ctx.moveTo(x + c.r, y);
+                ctx.arc(x, y, c.r, 0, Math.PI * 2);
+            });
+            ctx.fill();
+            
+            // Dibujar cada círculo del arbusto
+            circles.forEach(c => {
+                // Verde oscuro base
+                ctx.fillStyle = '#2E7D32';
+                ctx.beginPath();
+                ctx.arc(c.x, c.y, c.r, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Verde claro detalle (brillo)
+                ctx.fillStyle = '#4CAF50';
+                ctx.beginPath();
+                ctx.arc(c.x - c.r*0.2, c.y - c.r*0.2, c.r*0.4, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            
+            ctx.restore();
+        } else {
+            // Otros tipos (tree, flower) - mantener comportamiento circular original
+            let color = '#888888';
+            let darkColor = '#666666';
+            if (deco.type.includes('tree')) {
+                color = '#2E7D32';
+                darkColor = '#1B5E20';
+            } else if (deco.type.includes('flower')) {
+                color = '#E91E63';
+                darkColor = '#C2185B';
+            }
+            
+            // Sombra
+            ctx.fillStyle = 'rgba(0,0,0,0.2)';
+            ctx.beginPath();
+            ctx.arc(centerX + 3, centerY + 3, radius, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Círculo principal
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Detalle central más oscuro
+            ctx.fillStyle = darkColor;
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius * 0.6, 0, Math.PI * 2);
+            ctx.fill();
         }
-        
-        // Sombra
-        ctx.fillStyle = 'rgba(0,0,0,0.2)';
-        ctx.beginPath();
-        ctx.arc(centerX + 3, centerY + 3, radius, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Círculo principal
-        ctx.fillStyle = color;
-        ctx.beginPath();
-        ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Detalle central más oscuro
-        ctx.fillStyle = darkColor;
-        ctx.beginPath();
-        ctx.arc(centerX, centerY, radius * 0.6, 0, Math.PI * 2);
-        ctx.fill();
     }
 }
 
