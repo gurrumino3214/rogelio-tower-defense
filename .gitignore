@@ -1,4 +1,1 @@
-```
-# Logs and temp files
-*.log
-```
+(js/menu_level_config.js and js/menu.js are source files, no build artifacts, dependencies, or temp files in the changes)
