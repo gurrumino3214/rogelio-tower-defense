@@ -1239,8 +1239,11 @@ function toggleSpeed() {
 
 function restartGame() {
     fadeTransition(() => {
-        // Resetear variables del juego
-        player.money = 100;
+        // Obtener configuración del nivel actual
+        const levelConfig = getLevelConfig(currentLevel);
+        
+        // Resetear variables del juego con configuración del nivel
+        player.money = levelConfig.startMoney;
         player.lives = 10;
         player.wave = 1;
         towers = [];
@@ -1260,10 +1263,16 @@ function restartGame() {
         menuElements.pauseMenu.classList.remove('active');
         menuElements.gameUI.classList.add('active');
         
-        // Spawnear primer enemigo
-        spawnEnemy();
+        // Reinicializar camino y decoraciones
+        if (typeof initPath === 'function') initPath();
+        if (typeof initDecorations === 'function') initDecorations(levelConfig.mapSeed);
+        if (typeof initCamera === 'function') initCamera();
         
+        // Actualizar HUD
         updateHUD();
+        
+        // Iniciar primera oleada usando WaveManager
+        WaveManager.startWave(player.wave);
     });
 }
 
@@ -1312,10 +1321,24 @@ function updateHUD() {
     document.getElementById('hudWave').textContent = player.wave;
     document.getElementById('hudMoney').textContent = player.money;
     
-    // Actualizar número de enemigos vivos
+    // Actualizar número de enemigos vivos y total por vencer
     const enemyCount = typeof enemies !== 'undefined' ? enemies.length : 0;
     const bossCount = (typeof bossRogelio !== 'undefined' && bossRogelio && typeof bossActive !== 'undefined' && bossActive) ? 1 : 0;
-    document.getElementById('hudEnemies').textContent = enemyCount + bossCount;
+    const aliveEnemies = enemyCount + bossCount;
+    
+    // Obtener total de enemigos de la oleada actual desde WaveManager
+    let totalWaveEnemies = 0;
+    let defeatedInWave = 0;
+    if (typeof WaveManager !== 'undefined') {
+        totalWaveEnemies = WaveManager.total + (WaveManager.bossSpawned ? 1 : 0);
+        if (WaveManager.bossWave || WaveManager.miniBossWave) {
+            totalWaveEnemies = WaveManager.total + 1; // Incluye el boss
+        }
+        defeatedInWave = WaveManager.defeated || 0;
+    }
+    
+    // Mostrar enemigos vivos / total de la oleada
+    document.getElementById('hudEnemies').textContent = `${aliveEnemies}/${totalWaveEnemies}`;
     
     // Actualizar tiempo jugado
     const stats = JSON.parse(localStorage.getItem('rogelioTD_stats') || '{}');
