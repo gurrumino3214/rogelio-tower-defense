@@ -9,6 +9,10 @@ function getLevelConfig(level) {
     // Generar semilla única para el mapa basado en el nivel
     const mapSeed = level * 12345;
     
+    // Cantidad total de enemigos a derrotar en este nivel (NO por wave, es el TOTAL del nivel)
+    // Escalado: Nivel 1 = 10 enemigos, cada nivel aumenta 5 enemigos
+    const enemyCount = 10 + (level - 1) * 5;
+    
     // Determinar tipo de dificultad según rango de niveles
     let difficultyType, startMoney, enemyHealthMult, enemySpeedMult, bossEveryWave;
     
@@ -57,6 +61,7 @@ function getLevelConfig(level) {
         enemyHealthMult: enemyHealthMult,
         enemySpeedMult: enemySpeedMult,
         bossEveryWave: bossEveryWave,
+        enemyCount: enemyCount,  // CANTIDAD TOTAL DE ENEMIGOS A DERROTAR EN ESTE NIVEL
         // Duración estimada: 1-3 minutos por nivel
         estimatedDuration: 60 + (level % 3) * 60 // 60s, 120s, o 180s
     };

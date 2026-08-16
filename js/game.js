@@ -30,123 +30,83 @@ let timePlayedSession = 0; // Tiempo jugado en sesión actual (segundos)
 let lastTimePlayedUpdate = 0;
 
 // ==========================================
-// WAVE MANAGER - ÚNICA FUENTE DE VERDAD
+// SISTEMA DE ENEMIGOS POR NIVEL (SIN WAVES)
 // ==========================================
-const WaveManager = {
-    wave: 1,
-    spawned: 0,
-    alive: 0,
-    defeated: 0,
-    escaped: 0,
-    total: 0,
+const LevelEnemyManager = {
+    totalEnemies: 0,        // Total de enemigos que debe tener el nivel
+    enemiesSpawned: 0,      // Cantidad de enemigos ya generados
+    enemiesDefeated: 0,     // Cantidad de enemigos derrotados
     spawnTimer: 0,
-    spawnInterval: 2000,
+    spawnInterval: 2000,    // Intervalo entre spawns (ms)
     active: false,
-    bossWave: false,
-    miniBossWave: false,
     bossSpawned: false,
     bossDefeated: false,
-    finalWave: 50, // Oleada final donde aparece Rogelio
+    level: 1,
     
-    startWave: function(waveNum) {
-        this.wave = waveNum;
-        this.bossWave = (waveNum === this.finalWave); // Solo la última oleada es boss final
-        this.miniBossWave = (waveNum % 10 === 0 && !this.bossWave); // Cada 10 oleadas (excepto la final) es mini boss
-        this.total = 5 + Math.floor(waveNum * 1.5);
-        if (this.bossWave || this.miniBossWave) {
-            this.total = 3; // Menos enemigos normales en boss wave
-        }
-        this.spawned = 0;
-        this.alive = 0;
-        this.defeated = 0;
-        this.escaped = 0;
+    startLevel: function(levelNum, enemyCount) {
+        this.level = levelNum;
+        this.totalEnemies = enemyCount;
+        this.enemiesSpawned = 0;
+        this.enemiesDefeated = 0;
         this.active = true;
         this.bossSpawned = false;
         this.bossDefeated = false;
         this.spawnTimer = 0;
-        console.log('[WAVE] Oleada ' + waveNum + ' iniciada. Total: ' + this.total + 
-            (this.bossWave ? ' + BOSS FINAL ROGELIO' : (this.miniBossWave ? ' + MINI BOSS' : '')));
+        console.log('[LEVEL] Nivel ' + levelNum + ' iniciado. Enemigos totales: ' + this.totalEnemies);
     },
     
     update: function(deltaTime) {
         if (!this.active) return false;
 
-        // Spawnear enemigos normales primero (incluyendo oleadas con boss)
-        if (this.spawned < this.total && !this.bossSpawned) {
+        // Verificar si todos los enemigos fueron derrotados (CONDICIÓN DE VICTORIA)
+        if (this.enemiesDefeated >= this.totalEnemies && this.enemiesSpawned >= this.totalEnemies) {
+            this.active = false;
+            this.completeLevel();
+            return true;
+        }
+
+        // Spawnear enemigos hasta alcanzar el total
+        if (this.enemiesSpawned < this.totalEnemies && !this.bossSpawned) {
             this.spawnTimer += deltaTime * gameSpeed;
             if (this.spawnTimer >= this.spawnInterval) {
                 this.spawnTimer = 0;
                 this.spawnNormalEnemy();
-                this.spawned++;
+                this.enemiesSpawned++;
             }
-        } else if ((this.bossWave || this.miniBossWave) && !this.bossSpawned && this.spawned >= this.total) {
-            // Spawnear boss después de enemigos normales
-            this.spawnBoss();
+        } else if (!this.bossSpawned && this.enemiesSpawned >= this.totalEnemies) {
+            // Ya se generaron todos los enemigos normales
             this.bossSpawned = true;
         }
 
-        // Contar enemigos vivos
-        this.alive = enemies.length + (bossRogelio && bossActive ? 1 : 0);
-
-        // Verificar si la oleada terminó
-        if (this.spawned >= this.total && this.bossSpawned && this.alive <= 0 && (!this.bossWave || this.bossDefeated)) {
-            this.active = false;
-            this.completeWave();
-            return true;
-        } else if (!this.bossWave && !this.miniBossWave && this.spawned >= this.total && this.alive <= 0) {
-            // Oleada normal sin boss
-            this.active = false;
-            this.completeWave();
-            return true;
-        }
         return false;
     },
     
     spawnNormalEnemy: function() {
-        let enemyType = getEnemyTypeForWave(this.wave);
+        let enemyType = getEnemyTypeForLevel(this.level, this.enemiesSpawned);
         createEnemy(enemyType);
     },
     
-    spawnBoss: function() {
-        if (this.bossWave) {
-            // Oleada final: Boss Rogelio (rojo, el más grande)
-            spawnBossRogelio(true); // isFinal = true
-        } else if (this.miniBossWave) {
-            // Cada 10 oleadas: Mini boss random de color diferente
-            spawnMiniBoss(this.wave);
-        }
-    },
-    
-    completeWave: function() {
-        console.log('[WAVE] Oleada ' + this.wave + ' completada!');
+    completeLevel: function() {
+        console.log('[LEVEL] Nivel ' + this.level + ' completado! Enemigos derrotados: ' + this.enemiesDefeated);
         
-        // Guardar max wave
+        // Guardar estadísticas
         const stats = JSON.parse(localStorage.getItem('rogelioTD_stats') || '{}');
-        if (!stats.maxWave || this.wave > stats.maxWave) {
-            stats.maxWave = this.wave;
+        if (!stats.maxLevel || this.level > stats.maxLevel) {
+            stats.maxLevel = this.level;
             localStorage.setItem('rogelioTD_stats', JSON.stringify(stats));
         }
         
-        // Iniciar siguiente oleada después de 2 segundos (usando timer controlado)
-        setTimeout(() => {
-            if (gameState === 'PLAYING') {
-                player.wave++;
-                this.startWave(player.wave);
-            }
-        }, 2000);
+        // Mostrar pantalla de victoria
+        showVictoryScreen(this.level);
     },
     
     enemyDefeated: function() {
-        this.defeated++;
+        this.enemiesDefeated++;
     },
     
     enemyEscaped: function() {
-        this.escaped++;
-    },
-    
-    bossDefeated: function() {
-        this.bossDefeated = true;
-        this.defeated++;
+        // Los enemigos que escapan NO cuentan como derrotados
+        // Solo restan vidas
     }
 };
 
@@ -154,7 +114,7 @@ const WaveManager = {
 let player = {
     money: 100,
     lives: 10,
-    wave: 1,
+    currentLevel: 1,
     enemiesDefeated: 0
 };
 
@@ -382,7 +342,7 @@ window.initDecorations = initDecorations;
 window.initCamera = initCamera;
 window.screenToWorld = screenToWorld;
 window.screenToInternal = screenToInternal;
-window.WaveManager = WaveManager;
+window.LevelEnemyManager = LevelEnemyManager;
 
 // Función auxiliar para convertir coordenadas de pantalla a coordenadas internas del juego (ahora es directo porque scale=1, offsetX=0, offsetY=0)
 function screenToInternal(screenX, screenY) {
@@ -563,9 +523,9 @@ function createEnemy(enemyType) {
 }
 
 // ==========================================
-// TIPOS DE ENEMIGOS SEGÚN OLEADA
+// TIPOS DE ENEMIGOS SEGÚN NIVEL
 // ==========================================
-function getEnemyTypeForWave(wave) {
+function getEnemyTypeForLevel(level, enemyIndex) {
     const types = [
         { name: 'goblin', health: 100, speed: 2, reward: 10, color: '#8BC34A', damage: 1 },
         { name: 'bandit', health: 150, speed: 2.5, reward: 15, color: '#FF5722', damage: 2 },
@@ -574,10 +534,14 @@ function getEnemyTypeForWave(wave) {
         { name: 'skeleton_lord', health: 500, speed: 1.2, reward: 50, color: '#9C27B0', damage: 4 }
     ];
     
-    // Seleccionar tipo basado en la oleada
-    let index = Math.min(Math.floor((wave - 1) / 2), types.length - 1);
-    // No usar skeleton_lord para oleadas de mini boss o boss final (ya hay boss)
-    if (wave % 10 === 0 && wave !== WaveManager.finalWave) index = types.length - 2; // Dark Knight en oleadas de mini boss
+    // Seleccionar tipo basado en el nivel y progreso del nivel
+    // Progresión más simple: cada 5 enemigos derrotados, aparece un tipo más fuerte
+    let index = Math.min(Math.floor(enemyIndex / 5), types.length - 1);
+    
+    // En niveles altos (21+), permitir todos los tipos desde el inicio
+    if (level >= 21) {
+        index = Math.min(index + 1, types.length - 1);
+    }
     
     return types[index];
 }
@@ -590,7 +554,7 @@ function spawnBossRogelio(isFinal = false) {
     
     // Si es la oleada final, Rogelio es más grande y más poderoso
     const bossSize = isFinal ? 192 : 128;
-    const bossHealth = isFinal ? 15000 + (player.wave * 1000) : 5000 + (player.wave * 500);
+    const bossHealth = isFinal ? 15000 + (player.currentLevel * 1000) : 5000 + (player.currentLevel * 500);
     const bossReward = isFinal ? 2000 : 500;
     const bossDamage = isFinal ? 10 : 5;
     
@@ -687,8 +651,8 @@ function spawnMiniBoss(wave) {
 function update(deltaTime) {
     if (gameState !== 'PLAYING') return;
     
-    // Actualizar wave manager (sistema de olas)
-    WaveManager.update(deltaTime);
+    // Actualizar LevelEnemyManager (sistema de enemigos por nivel sin waves)
+    LevelEnemyManager.update(deltaTime);
     
     // Verificar fusión de torres disponible
     checkFusionAvailable();
@@ -727,8 +691,8 @@ function update(deltaTime) {
                     // Enemigo llegó al final
                     player.lives--;
                     
-                    // Notificar al WaveManager que un enemigo escapó
-                    WaveManager.enemyEscaped();
+                    // Notificar al LevelEnemyManager que un enemigo escapó (NO cuenta como derrotado)
+                    LevelEnemyManager.enemyEscaped();
                     
                     enemies.splice(i, 1);
                     
@@ -797,8 +761,8 @@ function update(deltaTime) {
                         // Boss derrotado
                         player.money += bossRogelio.reward;
                         
-                        // Notificar al WaveManager
-                        WaveManager.bossDefeated();
+                        // Notificar al LevelEnemyManager
+                        LevelEnemyManager.enemyDefeated();
                         
                         // Actualizar estadísticas
                         if (window.menuAPI) {
@@ -836,8 +800,8 @@ function update(deltaTime) {
                                 window.menuAPI.incrementStat('enemiesDefeated');
                             }
                             
-                            // Notificar al WaveManager que un enemigo fue derrotado
-                            WaveManager.enemyDefeated();
+                            // Notificar al LevelEnemyManager que un enemigo fue derrotado
+                            LevelEnemyManager.enemyDefeated();
                             
                             enemies.splice(j, 1);
                             
@@ -1536,7 +1500,7 @@ function drawUI() {
         
         ctx.fillStyle = '#FFFFFF';
         ctx.font = '24px Arial, sans-serif';
-        ctx.fillText(`Olas sobrevividas: ${player.wave}`, canvas.width / 2, canvas.height / 2 + 20);
+        ctx.fillText(`Nivel: ${player.currentLevel}`, canvas.width / 2, canvas.height / 2 + 20);
         
         ctx.font = '16px Arial, sans-serif';
         ctx.fillStyle = '#AAAAAA';
@@ -1625,6 +1589,107 @@ function mergeTowers() {
 }
 
 // ==========================================
+// PANTALLA DE VICTORIA
+// ==========================================
+let victoryLevel = 0;
+
+function showVictoryScreen(level) {
+    victoryLevel = level;
+    gameState = 'VICTORY';
+    
+    // Guardar victoria en estadísticas
+    if (window.menuAPI) {
+        window.menuAPI.incrementStat('victories');
+    }
+}
+
+function drawVictoryScreen() {
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Título
+    ctx.fillStyle = '#4CAF50';
+    ctx.font = 'bold 56px Arial, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('¡FELICIDADES!', canvas.width / 2, canvas.height / 2 - 80);
+    
+    // Mensaje de nivel completado
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = 'bold 32px Arial, sans-serif';
+    ctx.fillText('Has completado el Nivel ' + victoryLevel, canvas.width / 2, canvas.height / 2 - 20);
+    
+    // Botón VOLVER AL MENÚ
+    const menuBtnX = canvas.width / 2 - 160;
+    const menuBtnY = canvas.height / 2 + 40;
+    const menuBtnWidth = 300;
+    const menuBtnHeight = 50;
+    
+    ctx.fillStyle = '#607D8B';
+    ctx.fillRect(menuBtnX, menuBtnY, menuBtnWidth, menuBtnHeight);
+    ctx.strokeStyle = '#90A4AE';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(menuBtnX, menuBtnY, menuBtnWidth, menuBtnHeight);
+    
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = 'bold 18px Arial, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('VOLVER AL MENÚ', canvas.width / 2, menuBtnY + 32);
+    
+    // Botón SIGUIENTE NIVEL
+    const nextBtnX = canvas.width / 2 - 160;
+    const nextBtnY = canvas.height / 2 + 110;
+    const nextBtnWidth = 300;
+    const nextBtnHeight = 50;
+    
+    ctx.fillStyle = '#4CAF50';
+    ctx.fillRect(nextBtnX, nextBtnY, nextBtnWidth, nextBtnHeight);
+    ctx.strokeStyle = '#81C784';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(nextBtnX, nextBtnY, nextBtnWidth, nextBtnHeight);
+    
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = 'bold 18px Arial, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('SIGUIENTE NIVEL', canvas.width / 2, nextBtnY + 32);
+}
+
+function handleVictoryClick(e) {
+    const rect = canvas.getBoundingClientRect();
+    const screenX = e.clientX - rect.left;
+    const screenY = e.clientY - rect.top;
+    
+    const menuBtnX = canvas.width / 2 - 160;
+    const menuBtnY = canvas.height / 2 + 40;
+    const menuBtnWidth = 300;
+    const menuBtnHeight = 50;
+    
+    const nextBtnX = canvas.width / 2 - 160;
+    const nextBtnY = canvas.height / 2 + 110;
+    const nextBtnWidth = 300;
+    const nextBtnHeight = 50;
+    
+    // Click en VOLVER AL MENÚ
+    if (screenX >= menuBtnX && screenX <= menuBtnX + menuBtnWidth &&
+        screenY >= menuBtnY && screenY <= menuBtnY + menuBtnHeight) {
+        if (window.menuAPI) {
+            window.menuAPI.showMainMenu();
+        }
+        return;
+    }
+    
+    // Click en SIGUIENTE NIVEL
+    if (screenX >= nextBtnX && screenX <= nextBtnX + nextBtnWidth &&
+        screenY >= nextBtnY && screenY <= nextBtnY + nextBtnHeight) {
+        // Cargar siguiente nivel
+        const nextLevel = victoryLevel + 1;
+        if (window.menuAPI && typeof window.menuAPI.startLevel === 'function') {
+            window.menuAPI.startLevel(nextLevel);
+        }
+        return;
+    }
+}
+
+// ==========================================
 // REINICIAR DESPUÉS DE GAME OVER
 // ==========================================
 function restartGameAfterGameOver() {
@@ -1635,7 +1700,7 @@ function restartGameAfterGameOver() {
     // Resetear variables
     player.money = 100;
     player.lives = 10;
-    player.wave = 1;
+    player.currentLevel = 1;
     towers = [];
     enemies = [];
     bullets = [];
