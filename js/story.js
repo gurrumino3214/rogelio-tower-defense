@@ -493,14 +493,23 @@ function drawStoryScreen() {
 function handleStoryClick(screenX, screenY) {
     if (!storyScreenVisible) return;
     
+    // Usar window.canvas para asegurar que tenemos el canvas correcto
+    if (!window.canvas) {
+        console.error('[STORY] canvas no disponible');
+        return;
+    }
+    
     const btnWidth = 250;
     const btnHeight = 50;
-    const btnX = canvas.width / 2 - btnWidth / 2;
-    const btnY = canvas.height / 2 + 100;
+    const btnX = window.canvas.width / 2 - btnWidth / 2;
+    const btnY = window.canvas.height / 2 + 100;
+    
+    console.log('[STORY CLICK] screenX:', screenX, 'screenY:', screenY, 'btnX:', btnX, 'btnY:', btnY);
     
     // Verificar click en botón CONTINUAR
     if (screenX >= btnX && screenX <= btnX + btnWidth && 
         screenY >= btnY && screenY <= btnY + btnHeight) {
+        console.log('[STORY] Click en CONTINUAR detectado');
         continueFromStory();
     }
 }
