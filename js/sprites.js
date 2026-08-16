@@ -14,20 +14,48 @@ const SpriteManager = {
       keys: ['grass', 'path', 'path_edge', 'grass_flower'] }
   ],
 
+  // Imágenes de tiles individuales para el mapa
+  tileImages: {
+    grass: null,
+    grass_alt: null,
+    path: null,
+    path_alt: null,
+    stone: null,
+    stone_alt: null,
+    water: null,
+    water_alt: null
+  },
+
   loadAll: function (callback) {
-    let pending = this.sheets.length;
+    let pending = this.sheets.length + Object.keys(this.tileImages).length;
+    let loaded = 0;
+    
+    const checkComplete = () => {
+      loaded++;
+      if (loaded >= pending) { 
+        this.ready = true; 
+        if (callback) callback(); 
+      }
+    };
+    
     this.sheets.forEach(sheet => {
       const img = new Image();
-      img.onload = () => {
-        this.processSheet(img, sheet);
-        if (--pending === 0) { this.ready = true; if (callback) callback(); }
-      };
+      img.onload = checkComplete;
       img.onerror = () => {
         sheet.keys.forEach(k => this.sprites[k] = this.createPlaceholder(k));
-        if (--pending === 0) { this.ready = true; if (callback) callback(); }
+        checkComplete();
       };
       img.src = sheet.url;
     });
+    
+    // Cargar tiles individuales
+    for (let tileName in this.tileImages) {
+      const img = new Image();
+      img.onload = checkComplete;
+      img.onerror = checkComplete;
+      img.src = `assets/tiles/${tileName}.png`;
+      this.tileImages[tileName] = img;
+    }
   },
 
   init: function (cb) { this.loadAll(cb); },
