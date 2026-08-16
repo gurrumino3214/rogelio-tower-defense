@@ -185,7 +185,7 @@ let worldHeight = 1536;
 let camera = {
     x: 0,
     y: 0,
-    zoom: 1,
+    zoom: 0.7,
     width: 0,
     height: 0
 };
