@@ -488,8 +488,17 @@ function handlePauseButtonClick(e) {
 function openModal(modalName) {
     const modal = menuElements.modals[modalName];
     if (modal) {
+        // Inicializar audio si es necesario antes de reproducir sonido
+        if (!audioContext) {
+            initAudio();
+        }
         modal.classList.add('active');
         playSound('open');
+        
+        // Resetear tutorial a página 1 cuando se abre
+        if (modalName === 'howto') {
+            showTutorialPage(1);
+        }
     }
 }
 
@@ -886,15 +895,31 @@ function showTutorialPage(pageNum) {
     }
 }
 
-// Añadir animación CSS para fade in del tutorial
-const tutorialStyle = document.createElement('style');
-tutorialStyle.textContent = `
+// Añadir animación CSS para fade in del tutorial y créditos
+const menuAnimationsStyle = document.createElement('style');
+menuAnimationsStyle.textContent = `
     @keyframes fadeIn {
         from { opacity: 0; transform: translateX(20px); }
         to { opacity: 1; transform: translateX(0); }
     }
+    
+    @keyframes creditsSlideIn {
+        from { opacity: 0; transform: translateY(30px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .credits-section {
+        animation: creditsSlideIn 0.5s ease forwards;
+        opacity: 0;
+    }
+    
+    .credits-section:nth-child(1) { animation-delay: 0.1s; }
+    .credits-section:nth-child(2) { animation-delay: 0.2s; }
+    .credits-section:nth-child(3) { animation-delay: 0.3s; }
+    .credits-section:nth-child(4) { animation-delay: 0.4s; }
+    .credits-thanks { animation-delay: 0.5s; }
 `;
-document.head.appendChild(tutorialStyle);
+document.head.appendChild(menuAnimationsStyle);
 
 // ==========================================
 // TRANSICIONES
