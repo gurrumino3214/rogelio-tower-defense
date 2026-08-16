@@ -167,6 +167,44 @@ let particles = []; // Declarar particles para evitar errores
 // Torre seleccionada para mejorar
 let selectedTower = null;
 
+// Sistema de selección de tipo de torre
+let showTowerTypeMenu = false;
+let pendingTowerPosition = null;
+
+// Tipos de torres disponibles
+const TOWER_TYPES = [
+    { 
+        id: 'basic', 
+        name: 'Torre Básica', 
+        cost: 50, 
+        damage: 25, 
+        fireRate: 1000, 
+        range: 150, 
+        color: '#4CAF50',
+        description: 'Daño moderado, velocidad media'
+    },
+    { 
+        id: 'rapid', 
+        name: 'Torre Rápida', 
+        cost: 75, 
+        damage: 15, 
+        fireRate: 500, 
+        range: 120, 
+        color: '#2196F3',
+        description: 'Bajo daño, alta velocidad'
+    },
+    { 
+        id: 'sniper', 
+        name: 'Torre Francotirador', 
+        cost: 100, 
+        damage: 100, 
+        fireRate: 2000, 
+        range: 300, 
+        color: '#FF5722',
+        description: 'Alto daño, lento, largo alcance'
+    }
+];
+
 // Sistema de boss Rogelio
 let bossRogelio = null;
 let bossActive = false;
@@ -227,7 +265,7 @@ function isInViewport(x, y, width, height) {
 // Decoraciones del mapa (posición fija en coordenadas del mundo)
 let decorations = [];
 
-function initDecorations() {
+function initDecorations(mapSeed) {
     decorations = [];
     const tileSize = 64;
     
@@ -394,6 +432,54 @@ function handleClick(e) {
         // El menú ahora maneja esto, no iniciar directamente
         return;
     } else if (gameState === 'PLAYING') {
+        // Si estamos mostrando el menú de selección de tipo de torre
+        if (showTowerTypeMenu && pendingTowerPosition) {
+            // Verificar si se hizo click en una opción del menú de torres
+            const menuX = pendingTowerPosition.x;
+            const menuY = pendingTowerPosition.y;
+            const optionHeight = 50;
+            const menuWidth = 200;
+            
+            for (let i = 0; i < TOWER_TYPES.length; i++) {
+                const optY = menuY + (i * optionHeight);
+                if (x >= menuX && x <= menuX + menuWidth && y >= optY && y <= optY + optionHeight) {
+                    // Seleccionar tipo de torre
+                    const towerType = TOWER_TYPES[i];
+                    if (player.money >= towerType.cost) {
+                        player.money -= towerType.cost;
+                        towers.push({
+                            x: pendingTowerPosition.worldX,
+                            y: pendingTowerPosition.worldY,
+                            range: towerType.range,
+                            damage: towerType.damage,
+                            fireRate: towerType.fireRate,
+                            lastShot: 0,
+                            level: 1,
+                            color: towerType.color,
+                            type: towerType.id
+                        });
+
+                        // Actualizar estadísticas
+                        if (window.menuAPI) {
+                            window.menuAPI.incrementStat('towersPlaced');
+                        }
+
+                        // Actualizar HUD
+                        if (window.menuAPI) {
+                            window.menuAPI.updateHUD();
+                        }
+                    }
+                    showTowerTypeMenu = false;
+                    pendingTowerPosition = null;
+                    return;
+                }
+            }
+            // Si hizo click fuera del menú, cancelar
+            showTowerTypeMenu = false;
+            pendingTowerPosition = null;
+            return;
+        }
+        
         // Primero verificar si se hizo click en una torre existente para seleccionarla/mejorarla
         let clickedTower = null;
         for (let i = 0; i < towers.length; i++) {
@@ -414,30 +500,16 @@ function handleClick(e) {
             return;
         }
         
-        // Si no se hizo click en una torre, colocar nueva torre
-        if (player.money >= 50) {
-            player.money -= 50;
-            towers.push({
-                x: x,
-                y: y,
-                range: 150,
-                damage: 25,
-                fireRate: 1000,
-                lastShot: 0,
-                level: 1,
-                color: '#4CAF50'
-            });
-
-            // Actualizar estadísticas
-            if (window.menuAPI) {
-                window.menuAPI.incrementStat('towersPlaced');
-            }
-
-            // Actualizar HUD
-            if (window.menuAPI) {
-                window.menuAPI.updateHUD();
-            }
-        }
+        // Si no se hizo click en una torre, mostrar menú de selección de tipo de torre
+        // Guardar posición para el menú
+        const internalPos = screenToInternal(screenX, screenY);
+        pendingTowerPosition = {
+            x: screenX,
+            y: screenY,
+            worldX: x,
+            worldY: y
+        };
+        showTowerTypeMenu = true;
     } else if (gameState === 'GAMEOVER') {
         // Reiniciar después de game over
         restartGameAfterGameOver();
@@ -1224,6 +1296,55 @@ function drawUI() {
         // Solo actualizamos los valores
         if (window.menuAPI) {
             window.menuAPI.updateHUD();
+        }
+        
+        // Dibujar menú de selección de tipo de torre si está activo
+        if (showTowerTypeMenu && pendingTowerPosition) {
+            const menuX = pendingTowerPosition.x;
+            const menuY = pendingTowerPosition.y;
+            const optionHeight = 50;
+            const menuWidth = 200;
+            
+            // Fondo del menú
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
+            ctx.fillRect(menuX, menuY, menuWidth, TOWER_TYPES.length * optionHeight);
+            
+            // Borde del menú
+            ctx.strokeStyle = '#ffd700';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(menuX, menuY, menuWidth, TOWER_TYPES.length * optionHeight);
+            
+            // Título
+            ctx.fillStyle = '#ffd700';
+            ctx.font = 'bold 14px Arial, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('SELECCIONA TORRE', menuX + menuWidth / 2, menuY + 20);
+            
+            // Opciones de torres
+            for (let i = 0; i < TOWER_TYPES.length; i++) {
+                const tower = TOWER_TYPES[i];
+                const optY = menuY + 25 + (i * optionHeight);
+                
+                // Fondo de la opción
+                ctx.fillStyle = i % 2 === 0 ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.05)';
+                ctx.fillRect(menuX + 2, optY - 12, menuWidth - 4, optionHeight - 4);
+                
+                // Color indicador
+                ctx.fillStyle = tower.color;
+                ctx.fillRect(menuX + 8, optY - 8, 20, 20);
+                
+                // Nombre y costo
+                ctx.fillStyle = player.money >= tower.cost ? '#ffffff' : '#666666';
+                ctx.font = '12px Arial, sans-serif';
+                ctx.textAlign = 'left';
+                ctx.fillText(tower.name, menuX + 35, optY + 2);
+                
+                // Costo
+                ctx.fillStyle = player.money >= tower.cost ? '#ffd700' : '#666666';
+                ctx.font = 'bold 11px Arial, sans-serif';
+                ctx.textAlign = 'right';
+                ctx.fillText(tower.cost + ' 💰', menuX + menuWidth - 8, optY + 2);
+            }
         }
     } else if (gameState === 'GAMEOVER') {
         // Pantalla de Game Over

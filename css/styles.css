@@ -16,6 +16,9 @@ body {
 
 .hidden {
     display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
 }
 
 #gameContainer {
@@ -29,6 +32,9 @@ body {
     width: 100%;
     height: 100%;
     z-index: 0;
+    position: absolute;
+    top: 0;
+    left: 0;
 }
 
 /* Menú Principal */
@@ -44,6 +50,14 @@ body {
     align-items: center;
     background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 100%);
     z-index: 100;
+}
+
+#mainMenu.hidden {
+    display: none !important;
+}
+
+#menuBackground.hidden {
+    display: none !important;
 }
 
 .menu-title {
