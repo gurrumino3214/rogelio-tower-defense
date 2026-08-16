@@ -186,6 +186,7 @@ let camera = {
     x: 0,
     y: 0,
     zoom: 0.5,  // Reducir zoom inicial para mostrar más del mapa
+    zoom: 0.7,
     width: 0,
     height: 0
 };
