@@ -1,1 +1,5 @@
-(js/menu_level_config.js and js/menu.js are source files, no build artifacts, dependencies, or temp files in the changes)
+(js/game.js and js/menu.js are source files, no build artifacts, dependencies, or temp files in the changes)
+```
+# Logs and temp files
+*.log
+```

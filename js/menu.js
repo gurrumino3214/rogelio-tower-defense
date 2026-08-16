@@ -143,13 +143,14 @@ function createMenuElements() {
     const levelSelectModal = createLevelSelectModal(container);
     
     // Guardar referencias
+    // Guardar referencias (los modales ya fueron asignados en createModals)
     menuElements = {
         transition: transitionOverlay,
         background: menuBackground,
         mainMenu: mainMenu,
         gameUI: gameUI,
         pauseMenu: pauseMenu,
-        modals: {}
+        modals: menuElements.modals || {}
     };
 }
 
