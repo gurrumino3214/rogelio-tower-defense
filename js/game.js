@@ -167,6 +167,10 @@ let particles = []; // Declarar particles para evitar errores
 // Torre seleccionada para mejorar
 let selectedTower = null;
 
+// Sistema de fusión de torres
+let fusionAvailable = false;
+let fusionTowers = []; // Las 5 torres que se pueden fusionar
+
 // Sistema de selección de tipo de torre
 let showTowerTypeMenu = false;
 let pendingTowerPosition = null;
@@ -181,7 +185,7 @@ const TOWER_TYPES = [
         damage: 25, 
         fireRate: 1000, 
         range: 150, 
-        color: '#4CAF50',
+        color: '#8B4513', // Café - se deja como está
         description: 'Daño moderado, velocidad media'
     },
     { 
@@ -191,7 +195,7 @@ const TOWER_TYPES = [
         damage: 15, 
         fireRate: 500, 
         range: 120, 
-        color: '#2196F3',
+        color: '#2196F3', // Azul
         description: 'Bajo daño, alta velocidad'
     },
     { 
@@ -201,7 +205,7 @@ const TOWER_TYPES = [
         damage: 100, 
         fireRate: 2000, 
         range: 300, 
-        color: '#FF5722',
+        color: '#FFD700', // Amarillo
         description: 'Alto daño, lento, largo alcance'
     }
 ];
@@ -488,7 +492,7 @@ function handleClick(e) {
             return;
         }
         
-        // Primero verificar si se hizo click en una torre existente para seleccionarla/mejorarla
+        // Primero verificar si se hizo click en una torre existente para seleccionarla/mejorarla/fusionarla
         let clickedTower = null;
         for (let i = 0; i < towers.length; i++) {
             let tower = towers[i];
@@ -503,6 +507,17 @@ function handleClick(e) {
         }
         
         if (clickedTower) {
+            // Verificar si hay fusión disponible y se hizo click en una torre de fusión
+            if (fusionAvailable && fusionTowers.length === 5) {
+                // Verificar si la torre clickeada es parte de las torres para fusionar
+                const isFusionTower = fusionTowers.some(t => t === clickedTower);
+                if (isFusionTower) {
+                    // Ejecutar fusión
+                    mergeTowers();
+                    return;
+                }
+            }
+            
             // Mostrar panel de mejora de torre
             showTowerUpgradePanel(clickedTower);
             return;
@@ -684,6 +699,9 @@ function update(deltaTime) {
     
     // Actualizar wave manager (sistema de olas)
     WaveManager.update(deltaTime);
+    
+    // Verificar fusión de torres disponible
+    checkFusionAvailable();
     
     // Actualizar screen shake
     if (screenShakeIntensity > 0) {
@@ -1032,8 +1050,10 @@ function draw() {
     for (let tower of towers) {
         // Rango (solo si está jugando)
         if (gameState === 'PLAYING') {
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
-            ctx.lineWidth = 1;
+            ctx.strokeStyle = fusionAvailable && fusionTowers.includes(tower) 
+                ? 'rgba(255, 215, 0, 0.8)' // Dorado para torres en fusión
+                : 'rgba(255, 255, 255, 0.2)';
+            ctx.lineWidth = fusionAvailable && fusionTowers.includes(tower) ? 3 : 1;
             ctx.beginPath();
             ctx.arc(tower.x, tower.y, tower.range, 0, Math.PI * 2);
             ctx.stroke();
@@ -1107,11 +1127,39 @@ function drawTerrainBackground() {
 // DIBUJADO DE TORRES CON SPRITES
 // ==========================================
 function drawTowerWithSprite(tower) {
-    // Torre de color café
-    ctx.fillStyle = '#8B4513';
-    ctx.fillRect(tower.x - 20, tower.y - 20, 40, 40);
-    ctx.fillStyle = '#A0522D';
-    ctx.fillRect(tower.x - 10, tower.y - 10, 20, 20);
+    // Usar el color del tipo de torre
+    ctx.fillStyle = tower.color || '#8B4513';
+    
+    // Tamaño basado en el nivel de la torre
+    const baseSize = 20;
+    const sizeMultiplier = Math.pow(5, (tower.level - 1) / 2); // Crece con el nivel
+    const size = baseSize * sizeMultiplier;
+    
+    // Dibujar torre principal
+    ctx.fillRect(tower.x - size, tower.y - size, size * 2, size * 2);
+    
+    // Dibujar núcleo más claro
+    ctx.fillStyle = lightenColor(tower.color || '#8B4513', 30);
+    ctx.fillRect(tower.x - size/2, tower.y - size/2, size, size);
+    
+    // Mostrar nivel de la torre
+    if (tower.level > 1) {
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = 'bold ' + (12 + tower.level * 2) + 'px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('Lv.' + tower.level, tower.x, tower.y);
+    }
+}
+
+// Función auxiliar para aclarar colores
+function lightenColor(color, percent) {
+    const num = parseInt(color.replace('#', ''), 16);
+    const amt = Math.round(2.55 * percent);
+    const R = Math.min(255, (num >> 16) + amt);
+    const G = Math.min(255, ((num >> 8) & 0x00FF) + amt);
+    const B = Math.min(255, (num & 0x0000FF) + amt);
+    return '#' + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
 }
 
 // ==========================================
@@ -1349,6 +1397,17 @@ function drawUI() {
                 ctx.fillText(tower.cost + ' 💰', menuX + menuWidth - 8, optY + 2);
             }
         }
+        
+        // Mostrar indicador de fusión disponible
+        if (fusionAvailable && fusionTowers.length === 5) {
+            ctx.fillStyle = 'rgba(255, 215, 0, 0.3)';
+            ctx.fillRect(0, canvas.height - 60, canvas.width, 60);
+            
+            ctx.fillStyle = '#FFD700';
+            ctx.font = 'bold 20px Arial, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('¡FUSIÓN DISPONIBLE! Click en una torre dorada para combinar 5 torres en una más poderosa', canvas.width / 2, canvas.height - 25);
+        }
     } else if (gameState === 'GAMEOVER') {
         // Pantalla de Game Over
         ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
@@ -1367,6 +1426,86 @@ function drawUI() {
         ctx.fillStyle = '#AAAAAA';
         ctx.fillText('Click para volver al menú', canvas.width / 2, canvas.height / 2 + 60);
     }
+}
+
+// ==========================================
+// SISTEMA DE FUSIÓN DE TORRES
+// ==========================================
+// Verifica si hay 5 torres del mismo tipo y nivel para fusionar
+function checkFusionAvailable() {
+    fusionAvailable = false;
+    fusionTowers = [];
+    
+    // Agrupar torres por tipo y nivel
+    const towerGroups = {};
+    
+    for (let tower of towers) {
+        const key = tower.type + '_lvl' + tower.level;
+        if (!towerGroups[key]) {
+            towerGroups[key] = [];
+        }
+        towerGroups[key].push(tower);
+    }
+    
+    // Buscar grupos de 5 o más torres del mismo tipo y nivel
+    for (const key in towerGroups) {
+        if (towerGroups[key].length >= 5) {
+            fusionAvailable = true;
+            fusionTowers = towerGroups[key].slice(0, 5); // Tomar las primeras 5
+            break;
+        }
+    }
+}
+
+// Fusionar 5 torres en una más poderosa
+function mergeTowers() {
+    if (!fusionAvailable || fusionTowers.length !== 5) return;
+    
+    // Obtener el tipo y nivel de las torres a fusionar
+    const baseTower = fusionTowers[0];
+    const towerType = TOWER_TYPES.find(t => t.id === baseTower.type);
+    
+    if (!towerType) return;
+    
+    // Calcular posición promedio de las torres
+    let avgX = 0, avgY = 0;
+    for (let tower of fusionTowers) {
+        avgX += tower.x;
+        avgY += tower.y;
+    }
+    avgX /= 5;
+    avgY /= 5;
+    
+    // Remover las 5 torres originales
+    for (let tower of fusionTowers) {
+        const index = towers.indexOf(tower);
+        if (index > -1) {
+            towers.splice(index, 1);
+        }
+    }
+    
+    // Crear nueva torre fusionada (5 veces mejor que el nivel utilizado)
+    const newLevel = baseTower.level + 1;
+    const multiplier = 5; // 5 veces mejor
+    
+    towers.push({
+        x: avgX,
+        y: avgY,
+        range: towerType.range * multiplier,
+        damage: towerType.damage * multiplier,
+        fireRate: towerType.fireRate / multiplier, // Más rápido
+        lastShot: 0,
+        level: newLevel,
+        color: towerType.color,
+        type: towerType.id
+    });
+    
+    // Resetear estado de fusión
+    fusionAvailable = false;
+    fusionTowers = [];
+    selectedTower = null;
+    
+    console.log('[FUSION] Torres fusionadas! Nueva torre nivel ' + newLevel);
 }
 
 // ==========================================
@@ -1393,6 +1532,11 @@ function restartGameAfterGameOver() {
     screenShakeIntensity = 0;
     roglioAppearedText = '';
     roglioAppearedAlpha = 0;
+    
+    // Resetear sistema de fusión
+    fusionAvailable = false;
+    fusionTowers = [];
+    selectedTower = null;
     
     // Reinicializar decoraciones, camino y cámara
     initPath();
