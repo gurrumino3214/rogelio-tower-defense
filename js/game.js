@@ -232,8 +232,8 @@ let camera = {
 function initCamera() {
     camera.width = canvas.width / camera.zoom;
     camera.height = canvas.height / camera.zoom;
-    // Centrar cámara inicialmente
-    camera.x = (worldWidth - camera.width) / 2;
+    // Centrar cámara inicialmente pero desplazada hacia la derecha
+    camera.x = (worldWidth - camera.width) / 2 - 300; // Desplazar 300 píxeles a la izquierda para ver más a la derecha
     camera.y = (worldHeight - camera.height) / 2;
 }
 
