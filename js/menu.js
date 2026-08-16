@@ -1215,10 +1215,10 @@ function startGameFromMenu() {
         // Actualizar HUD
         updateHUD();
 
-        // Iniciar primera oleada usando WaveManager
-        WaveManager.startWave(player.wave);
+        // Iniciar sistema de enemigos por nivel (SIN WAVES)
+        LevelEnemyManager.startLevel(currentLevel, levelConfig.enemyCount);
         
-        console.log('[MENU] Juego iniciado - Nivel:', currentLevel, '- Dificultad:', levelConfig.difficultyType);
+        console.log('[MENU] Juego iniciado - Nivel:', currentLevel, '- Enemigos:', levelConfig.enemyCount, '- Dificultad:', levelConfig.difficultyType);
     });
 }
 
