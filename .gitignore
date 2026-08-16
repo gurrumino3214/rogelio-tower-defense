@@ -1,5 +1,5 @@
-(js/game.js is just a source file modification, no build artifacts, dependencies, or temp files in the changes - according to rule 6, output empty)
-
-```javascript
-
+```
+# Logs and temp files
+*.log
+server.log
 ```

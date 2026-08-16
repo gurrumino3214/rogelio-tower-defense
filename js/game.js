@@ -1024,8 +1024,8 @@ function draw() {
     drawTerrainBackground();
     
     // 4. Dibujar camino (coordenadas del mundo)
-    ctx.strokeStyle = '#555566';
-    ctx.lineWidth = 40;
+    ctx.strokeStyle = '#8B7355';  // Color tierra más claro para el borde
+    ctx.lineWidth = 50;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     ctx.beginPath();
@@ -1035,9 +1035,14 @@ function draw() {
     }
     ctx.stroke();
     
-    // Línea del camino más clara
-    ctx.strokeStyle = '#777788';
-    ctx.lineWidth = 30;
+    // Camino principal color tierra
+    ctx.strokeStyle = '#A0826D';  // Color tierra
+    ctx.lineWidth = 36;
+    ctx.stroke();
+    
+    // Línea central más clara
+    ctx.strokeStyle = '#C4B59A';  // Arena clara
+    ctx.lineWidth = 20;
     ctx.stroke();
     
     // 5. Dibujar decoraciones (árboles, rocas, arbustos, flores)
@@ -1110,14 +1115,18 @@ function drawTerrainBackground() {
     const cols = Math.ceil(worldWidth / tileSize);
     const rows = Math.ceil(worldHeight / tileSize);
     
-    // Dibujar todos los tiles del mapa completo (sin optimizacion de viewport)
+    // Dibujar todos los tiles del mapa completo con patrón de cesped alternado
     for (let row = 0; row < rows; row++) {
         for (let col = 0; col < cols; col++) {
             const x = col * tileSize;
             const y = row * tileSize;
             
-            // Un solo tono de verde neutro para todo el fondo
-            ctx.fillStyle = '#4A7C4E';
+            // Alternar entre dos tonos de verde para crear patrón de cesped
+            if ((row + col) % 2 === 0) {
+                ctx.fillStyle = '#4A7C4E'; // Verde más oscuro
+            } else {
+                ctx.fillStyle = '#5A8C5E'; // Verde más claro
+            }
             ctx.fillRect(x, y, tileSize, tileSize);
         }
     }
@@ -1135,8 +1144,20 @@ function drawTowerWithSprite(tower) {
     const sizeMultiplier = Math.pow(5, (tower.level - 1) / 2); // Crece con el nivel
     const size = baseSize * sizeMultiplier;
     
+    // Sombra
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.fillRect(tower.x - size + 3, tower.y - size + 3, size * 2, size * 2);
+    
     // Dibujar torre principal
+    ctx.fillStyle = tower.color || '#8B4513';
     ctx.fillRect(tower.x - size, tower.y - size, size * 2, size * 2);
+    
+    // Borde dorado si está disponible para fusión
+    if (fusionAvailable && fusionTowers.includes(tower)) {
+        ctx.strokeStyle = '#FFD700';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(tower.x - size - 3, tower.y - size - 3, size * 2 + 6, size * 2 + 6);
+    }
     
     // Dibujar núcleo más claro
     ctx.fillStyle = lightenColor(tower.color || '#8B4513', 30);
@@ -1283,23 +1304,50 @@ function drawBossHealthBar(boss) {
 }
 
 // ==========================================
-// DIBUJADO DE DECORACIONES
-// ==========================================
 function drawDecorations() {
-    // Diseño simple: dibujar decoraciones como formas básicas de color
+    // Dibujar decoraciones con formas circulares y colores más naturales
     for (let deco of decorations) {
         // Solo dibujar si está en el viewport
         if (!isInViewport(deco.x, deco.y, deco.width, deco.height)) continue;
         
-        // Dibujar rectángulo de color según tipo
-        let color = '#888888';
-        if (deco.type.includes('tree')) color = '#2E7D32';
-        else if (deco.type.includes('bush')) color = '#4CAF50';
-        else if (deco.type.includes('rock')) color = '#757575';
-        else if (deco.type.includes('flower')) color = '#E91E63';
+        const centerX = deco.x + deco.width / 2;
+        const centerY = deco.y + deco.height / 2;
+        const radius = deco.width / 2.5;
         
+        // Dibujar círculo de color según tipo con variación
+        let color = '#888888';
+        let darkColor = '#666666';
+        if (deco.type.includes('tree')) {
+            color = '#2E7D32';
+            darkColor = '#1B5E20';
+        } else if (deco.type.includes('bush')) {
+            color = '#4CAF50';
+            darkColor = '#2E7D32';
+        } else if (deco.type.includes('rock')) {
+            color = '#9E9E9E';
+            darkColor = '#616161';
+        } else if (deco.type.includes('flower')) {
+            color = '#E91E63';
+            darkColor = '#C2185B';
+        }
+        
+        // Sombra
+        ctx.fillStyle = 'rgba(0,0,0,0.2)';
+        ctx.beginPath();
+        ctx.arc(centerX + 3, centerY + 3, radius, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Círculo principal
         ctx.fillStyle = color;
-        ctx.fillRect(deco.x, deco.y, deco.width, deco.height);
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Detalle central más oscuro
+        ctx.fillStyle = darkColor;
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, radius * 0.6, 0, Math.PI * 2);
+        ctx.fill();
     }
 }
 
@@ -1307,17 +1355,27 @@ function drawDecorations() {
 // DIBUJADO DE AGUA
 // ==========================================
 function drawWater() {
-    // Función placeholder para agua - diseño simple con color azul
+    // Dibujar agua con efecto de ondas simples
     const tileSize = 64;
     const waterPositions = [
         {x: 100, y: 100}, {x: 164, y: 100}, {x: 100, y: 164}, {x: 164, y: 164}
     ];
     
+    const time = Date.now() * 0.001;
+    
     for (let pos of waterPositions) {
         if (!isInViewport(pos.x, pos.y, tileSize, tileSize)) continue;
         
+        // Base azul
         ctx.fillStyle = '#2196F3';
         ctx.fillRect(pos.x, pos.y, tileSize, tileSize);
+        
+        // Ondas animadas
+        ctx.fillStyle = 'rgba(255,255,255,0.3)';
+        for (let i = 0; i < 3; i++) {
+            const waveY = pos.y + ((i + 1) * tileSize / 4) + Math.sin(time + i) * 3;
+            ctx.fillRect(pos.x + 5, waveY, tileSize - 10, 2);
+        }
     }
 }
 
