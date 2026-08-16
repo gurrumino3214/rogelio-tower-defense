@@ -1045,6 +1045,9 @@ function selectLevel(level) {
     startGameFromMenu();
 }
 
+
+// Hacer selectLevel disponible globalmente para onclick en HTML dinámico
+window.selectLevel = selectLevel;
 // Añadir animación CSS para fade in del tutorial y créditos
 const menuAnimationsStyle = document.createElement('style');
 menuAnimationsStyle.textContent = `
