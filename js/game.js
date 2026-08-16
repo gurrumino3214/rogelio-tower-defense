@@ -289,6 +289,10 @@ window.onload = function() {
     canvas = document.getElementById('gameCanvas');
     ctx = canvas.getContext('2d');
     
+    // Hacer canvas y ctx disponibles globalmente para story.js
+    window.canvas = canvas;
+    window.ctx = ctx;
+    
     // Configurar Canvas para pixel art nítido
     ctx.imageSmoothingEnabled = false;
     ctx.mozImageSmoothingEnabled = false;
@@ -343,6 +347,10 @@ window.initCamera = initCamera;
 window.screenToWorld = screenToWorld;
 window.screenToInternal = screenToInternal;
 window.LevelEnemyManager = LevelEnemyManager;
+
+// Hacer canvas y ctx disponibles globalmente para story.js
+window.canvas = null;
+window.ctx = null;
 
 // Función auxiliar para convertir coordenadas de pantalla a coordenadas internas del juego (ahora es directo porque scale=1, offsetX=0, offsetY=0)
 function screenToInternal(screenX, screenY) {

@@ -421,6 +421,12 @@ function continueFromStory() {
 function drawStoryScreen() {
     if (!storyScreenVisible) return;
     
+    // Verificar que canvas y ctx estén disponibles
+    if (typeof canvas === 'undefined' || typeof ctx === 'undefined') {
+        console.error('[STORY] canvas o ctx no están disponibles');
+        return;
+    }
+    
     const story = getLevelStory(storyScreenLevel);
     
     // Fondo semi-transparente
