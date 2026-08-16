@@ -1,7 +1,1 @@
-(js/story.js has been added, but it's a source file - not a build artifact, dependency, or temp file)
-
-(index.html, js/game.js, js/menu.js have been modified, but these are all source files)
-
-(Since only source files are being tracked and no build artifacts, dependencies, or temp files are present in the changes, no .gitignore rules are needed)
-
-Output: (nothing)
+(js/menu.js, js/story.js)

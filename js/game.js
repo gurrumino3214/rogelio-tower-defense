@@ -355,6 +355,9 @@ function screenToInternal(screenX, screenY) {
 // Variable para rastrear estado del mouse
 let mouseState = { x: 0, y: 0, down: false };
 
+// Hacer mouseState disponible globalmente para story.js
+window.mouseState = mouseState;
+
 function handleMouseDown(e) {
     const rect = canvas.getBoundingClientRect();
     const screenX = e.clientX - rect.left;
