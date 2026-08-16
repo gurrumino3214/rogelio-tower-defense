@@ -185,17 +185,17 @@ let worldHeight = 1536;
 let camera = {
     x: 0,
     y: 0,
-    zoom: 1,
+    zoom: 0.5,  // Reducir zoom inicial para mostrar más del mapa
     width: 0,
     height: 0
 };
 
 function initCamera() {
-    camera.width = canvas.width;
-    camera.height = canvas.height;
+    camera.width = canvas.width / camera.zoom;
+    camera.height = canvas.height / camera.zoom;
     // Centrar cámara inicialmente
-    camera.x = (worldWidth - canvas.width) / 2;
-    camera.y = (worldHeight - canvas.height) / 2;
+    camera.x = (worldWidth - camera.width) / 2;
+    camera.y = (worldHeight - camera.height) / 2;
 }
 
 // Convertir coordenadas del mundo a coordenadas de pantalla
