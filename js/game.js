@@ -172,6 +172,7 @@ let showTowerTypeMenu = false;
 let pendingTowerPosition = null;
 
 // Tipos de torres disponibles
+let selectedTowerType = null; // Torre seleccionada actualmente para colocar
 const TOWER_TYPES = [
     { 
         id: 'basic', 
@@ -223,8 +224,7 @@ let worldHeight = 1536;
 let camera = {
     x: 0,
     y: 0,
-    zoom: 0.5,  // Reducir zoom inicial para mostrar más del mapa
-    zoom: 0.7,
+    zoom: 0.45,  // Zoom reducido para mostrar el mapa completo
     width: 0,
     height: 0
 };
@@ -232,8 +232,8 @@ let camera = {
 function initCamera() {
     camera.width = canvas.width / camera.zoom;
     camera.height = canvas.height / camera.zoom;
-    // Centrar cámara inicialmente pero desplazada hacia la derecha
-    camera.x = (worldWidth - camera.width) / 2 - 300; // Desplazar 300 píxeles a la izquierda para ver más a la derecha
+    // Centrar cámara inicialmente para mostrar todo el mapa
+    camera.x = (worldWidth - camera.width) / 2;
     camera.y = (worldHeight - camera.height) / 2;
 }
 
@@ -449,8 +449,8 @@ function handleClick(e) {
             const menuWidth = 200;
             
             for (let i = 0; i < TOWER_TYPES.length; i++) {
-                const optY = menuY + (i * optionHeight);
-                if (x >= menuX && x <= menuX + menuWidth && y >= optY && y <= optY + optionHeight) {
+                const optY = menuY + 25 + (i * optionHeight);
+                if (screenX >= menuX && screenX <= menuX + menuWidth && screenY >= optY - 12 && screenY <= optY - 12 + optionHeight - 4) {
                     // Seleccionar tipo de torre
                     const towerType = TOWER_TYPES[i];
                     if (player.money >= towerType.cost) {
