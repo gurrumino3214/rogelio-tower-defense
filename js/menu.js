@@ -1038,7 +1038,7 @@ function getDifficultyColor(type) {
 // ==========================================
 // SELECCIONAR NIVEL
 // ==========================================
-let pendingLevel = null; // Nivel pendiente de mostrar historia
+// Eliminar declaración duplicada de pendingLevel (ahora está en story.js)
 
 function selectLevel(level) {
     playSound('click');
@@ -1150,31 +1150,8 @@ function fadeTransition(callback) {
 // ACCIONES DEL MENÚ
 // ==========================================
 
-// Variables para pantalla de historia
-let storyScreenVisible = false;
-let storyScreenLevel = 0;
-
-// Mostrar pantalla de introducción de historia
-function showStoryScreen(level) {
-    pendingLevel = level;
-    storyScreenLevel = level;
-    storyScreenVisible = true;
-    
-    // Obtener historia del nivel
-    const story = getLevelStory(level);
-    
-    console.log('[STORY] Mostrando introducción para Nivel ' + level + ': ' + story.title);
-}
-
-// Continuar desde pantalla de historia al juego
-function continueFromStory() {
-    if (pendingLevel !== null) {
-        currentLevel = pendingLevel;
-        pendingLevel = null;
-        storyScreenVisible = false;
-        startGameFromMenu();
-    }
-}
+// Las variables y funciones de pantalla de historia ahora están en story.js
+// para evitar duplicación y conflictos
 
 function startGameFromMenu() {
     fadeTransition(() => {
