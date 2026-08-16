@@ -136,11 +136,8 @@ function createMenuElements() {
     `;
     container.appendChild(pauseMenu);
     
-    // Modales
+    // Modales (incluye levelSelect)
     createModals(container);
-    
-    // Modal de selección de niveles
-    const levelSelectModal = createLevelSelectModal(container);
     
     // Guardar referencias
     menuElements = {
@@ -157,6 +154,30 @@ function createMenuElements() {
 // CREAR MODALES
 // ==========================================
 function createModals(container) {
+    // Modal de selección de niveles (primero para que esté disponible)
+    const levelSelectModal = document.createElement('div');
+    levelSelectModal.id = 'levelSelectModal';
+    levelSelectModal.className = 'modal-overlay';
+    levelSelectModal.innerHTML = `
+        <div class="modal-content" style="max-width: 1000px;">
+            <button class="modal-close" data-close="levelSelect">×</button>
+            <h2 class="modal-title">SELECCIONA UN NIVEL</h2>
+            <div class="modal-info">
+                <p class="modal-description">Elige un nivel del 1 al 50. Cada nivel tiene dificultades únicas y mapas diferentes.</p>
+            </div>
+            <div id="levelSelector" style="display: grid; grid-template-columns: repeat(10, 1fr); gap: 10px; margin: 20px 0;">
+                <!-- Los niveles se generan dinámicamente -->
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
+                <button class="menu-btn" id="btnLevelPrev" style="min-width: 120px; padding: 10px 20px;">◀ Anterior</button>
+                <span id="levelPageIndicator" style="color: #ffd700; font-size: 16px;">1 / 5</span>
+                <button class="menu-btn" id="btnLevelNext" style="min-width: 120px; padding: 10px 20px;">Siguiente ▶</button>
+            </div>
+            <button class="menu-btn" id="btnLevelExit" style="margin-top: 15px; width: 100%;">Volver al Menú</button>
+        </div>
+    `;
+    container.appendChild(levelSelectModal);
+    
     // Configuración
     const settingsModal = document.createElement('div');
     settingsModal.id = 'settingsModal';
