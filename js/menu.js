@@ -13,6 +13,8 @@ let menuElements = {};
 let audioContext = null;
 let isMuted = false;
 let gameState = 'MENU'; // MENU, PLAYING, PAUSED, GAMEOVER, VICTORY
+let currentLevel = 1; // Nivel actual seleccionado (1-50)
+let levelPage = 1; // Página actual del selector de niveles (1-5)
 
 // ==========================================
 // INICIALIZACIÓN DEL MENÚ
@@ -137,6 +139,10 @@ function createMenuElements() {
     // Modales
     createModals(container);
     
+    // Modal de selección de niveles
+    const levelSelectModal = createLevelSelectModal(container);
+    
+    // Guardar referencias
     // Guardar referencias (los modales ya fueron asignados en createModals)
     menuElements = {
         transition: transitionOverlay,
@@ -299,8 +305,38 @@ function createModals(container) {
         settings: settingsModal,
         howto: howtoModal,
         stats: statsModal,
-        credits: creditsModal
+        credits: creditsModal,
+        levelSelect: levelSelectModal
     };
+}
+
+// ==========================================
+// CREAR MODAL DE SELECCIÓN DE NIVELES
+// ==========================================
+function createLevelSelectModal(container) {
+    const levelSelectModal = document.createElement('div');
+    levelSelectModal.id = 'levelSelectModal';
+    levelSelectModal.className = 'modal-overlay';
+    levelSelectModal.innerHTML = `
+        <div class="modal-content" style="max-width: 1000px;">
+            <button class="modal-close" data-close="levelSelect">×</button>
+            <h2 class="modal-title">SELECCIONA UN NIVEL</h2>
+            <div class="modal-info">
+                <p class="modal-description">Elige un nivel del 1 al 50. Cada nivel tiene dificultades únicas y mapas diferentes.</p>
+            </div>
+            <div id="levelSelector" style="display: grid; grid-template-columns: repeat(10, 1fr); gap: 10px; margin: 20px 0;">
+                <!-- Los niveles se generan dinámicamente -->
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
+                <button class="menu-btn" id="btnLevelPrev" style="min-width: 120px; padding: 10px 20px;">◀ Anterior</button>
+                <span id="levelPageIndicator" style="color: #ffd700; font-size: 16px;">1 / 5</span>
+                <button class="menu-btn" id="btnLevelNext" style="min-width: 120px; padding: 10px 20px;">Siguiente ▶</button>
+            </div>
+            <button class="menu-btn" id="btnLevelExit" style="margin-top: 15px; width: 100%;">Volver al Menú</button>
+        </div>
+    `;
+    container.appendChild(levelSelectModal);
+    return levelSelectModal;
 }
 
 // ==========================================
@@ -377,6 +413,11 @@ function setupMenuEvents() {
     // Botón de créditos
     document.getElementById('btnCreditsExit')?.addEventListener('click', () => closeModal('credits'));
     
+    // Botones del selector de niveles
+    document.getElementById('btnLevelPrev')?.addEventListener('click', () => showLevelPage(levelPage - 1));
+    document.getElementById('btnLevelNext')?.addEventListener('click', () => showLevelPage(levelPage + 1));
+    document.getElementById('btnLevelExit')?.addEventListener('click', () => { closeModal('levelSelect'); showMainMenu(); });
+    
     // Cerrar modales
     document.querySelectorAll('.modal-close').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -441,7 +482,7 @@ function handleMenuButtonClick(e) {
     
     switch(action) {
         case 'play':
-            startGameFromMenu();
+            openLevelSelect();
             break;
         case 'settings':
             openModal('settings');
@@ -457,6 +498,14 @@ function handleMenuButtonClick(e) {
             openModal('credits');
             break;
     }
+}
+
+// ==========================================
+// ABRIR SELECTOR DE NIVELES
+// ==========================================
+function openLevelSelect() {
+    openModal('levelSelect');
+    showLevelPage(1); // Mostrar primera página
 }
 
 // ==========================================
@@ -864,6 +913,9 @@ const tutorialPagesData = [
     }
 ];
 
+// ==========================================
+// MOSTRAR PÁGINA DE TUTORIAL
+// ==========================================
 function showTutorialPage(pageNum) {
     // Limitar página entre 1 y totalTutorialPages
     if (pageNum < 1) pageNum = 1;
@@ -895,6 +947,83 @@ function showTutorialPage(pageNum) {
     }
 }
 
+// ==========================================
+// MOSTRAR PÁGINA DE NIVELES
+// ==========================================
+function showLevelPage(pageNum) {
+    // Limitar página entre 1 y 5 (10 niveles por página = 50 niveles)
+    if (pageNum < 1) pageNum = 1;
+    if (pageNum > 5) pageNum = 5;
+    
+    levelPage = pageNum;
+    
+    const container = document.getElementById('levelSelector');
+    const indicator = document.getElementById('levelPageIndicator');
+    const prevBtn = document.getElementById('btnLevelPrev');
+    const nextBtn = document.getElementById('btnLevelNext');
+    
+    if (container && indicator) {
+        // Generar botones de niveles para la página actual
+        const startLevel = (pageNum - 1) * 10 + 1;
+        const endLevel = Math.min(pageNum * 10, 50);
+        
+        let levelsHTML = '';
+        for (let i = startLevel; i <= endLevel; i++) {
+            const difficulty = getLevelDifficulty(i);
+            const colorClass = getDifficultyColor(difficulty.type);
+            levelsHTML += `
+                <button class="level-btn ${colorClass}" data-level="${i}" onclick="selectLevel(${i})">
+                    <span class="level-number">${i}</span>
+                    <span class="level-difficulty">${difficulty.icon}</span>
+                </button>
+            `;
+        }
+        
+        container.innerHTML = levelsHTML;
+        
+        // Actualizar indicador
+        indicator.textContent = `${pageNum} / 5`;
+        
+        // Actualizar estado de botones
+        if (prevBtn) prevBtn.disabled = pageNum === 1;
+        if (nextBtn) nextBtn.disabled = pageNum === 5;
+    }
+}
+
+// ==========================================
+// OBTENER DIFICULTAD DEL NIVEL
+// ==========================================
+function getLevelDifficulty(level) {
+    if (level >= 41) return { type: 'extreme', icon: '👹', desc: 'Boss en cada ronda' };
+    if (level >= 31) return { type: 'hard', icon: '⚡', desc: 'Enemigos rápidos + vida' };
+    if (level >= 21) return { type: 'medium', icon: '🛡️', desc: 'Enemigos con más vida' };
+    if (level >= 11) return { type: 'easy', icon: '💰', desc: 'Mitad de dinero' };
+    return { type: 'normal', icon: '⭐', desc: 'Normal' };
+}
+
+// ==========================================
+// OBTENER COLOR DE DIFICULTAD
+// ==========================================
+function getDifficultyColor(type) {
+    switch(type) {
+        case 'extreme': return 'level-extreme';
+        case 'hard': return 'level-hard';
+        case 'medium': return 'level-medium';
+        case 'easy': return 'level-easy';
+        default: return 'level-normal';
+    }
+}
+
+// ==========================================
+// SELECCIONAR NIVEL
+// ==========================================
+function selectLevel(level) {
+    playSound('click');
+    currentLevel = level;
+    closeModal('levelSelect');
+    startGameFromMenu();
+}
+
 // Añadir animación CSS para fade in del tutorial y créditos
 const menuAnimationsStyle = document.createElement('style');
 menuAnimationsStyle.textContent = `
@@ -918,6 +1047,58 @@ menuAnimationsStyle.textContent = `
     .credits-section:nth-child(3) { animation-delay: 0.3s; }
     .credits-section:nth-child(4) { animation-delay: 0.4s; }
     .credits-thanks { animation-delay: 0.5s; }
+    
+    /* Estilos para botones de niveles */
+    .level-btn {
+        background: linear-gradient(135deg, #2a2a3a 0%, #1a1a2a 100%);
+        border: 2px solid #ffd700;
+        border-radius: 8px;
+        padding: 15px 5px;
+        color: #ffffff;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 70px;
+    }
+    
+    .level-btn:hover {
+        transform: scale(1.1);
+        box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+    }
+    
+    .level-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    
+    .level-number {
+        font-size: 20px;
+        margin-bottom: 5px;
+    }
+    
+    .level-difficulty {
+        font-size: 14px;
+    }
+    
+    .level-normal { border-color: #ffd700; }
+    .level-normal:hover { background: linear-gradient(135deg, #3a3a5a 0%, #2a2a4a 100%); }
+    
+    .level-easy { border-color: #ff9800; background: linear-gradient(135deg, #2a2a3a 0%, #1a1a2a 100%); }
+    .level-easy:hover { background: linear-gradient(135deg, #3a3a5a 0%, #2a2a4a 100%); box-shadow: 0 0 15px rgba(255, 152, 0, 0.5); }
+    
+    .level-medium { border-color: #f44336; background: linear-gradient(135deg, #2a2a3a 0%, #1a1a2a 100%); }
+    .level-medium:hover { background: linear-gradient(135deg, #3a3a5a 0%, #2a2a4a 100%); box-shadow: 0 0 15px rgba(244, 67, 54, 0.5); }
+    
+    .level-hard { border-color: #9c27b0; background: linear-gradient(135deg, #2a2a3a 0%, #1a1a2a 100%); }
+    .level-hard:hover { background: linear-gradient(135deg, #3a3a5a 0%, #2a2a4a 100%); box-shadow: 0 0 15px rgba(156, 39, 176, 0.5); }
+    
+    .level-extreme { border-color: #e91e63; background: linear-gradient(135deg, #2a2a3a 0%, #1a1a2a 100%); }
+    .level-extreme:hover { background: linear-gradient(135deg, #3a3a5a 0%, #2a2a4a 100%); box-shadow: 0 0 15px rgba(233, 30, 99, 0.5); }
 `;
 document.head.appendChild(menuAnimationsStyle);
 
@@ -966,10 +1147,15 @@ function startGameFromMenu() {
             gameCanvas.style.opacity = '1';
         }
 
-        // Resetear variables del juego
-        player.money = 100;
+        // Configurar nivel actual
+        const levelConfig = getLevelConfig(currentLevel);
+        
+        // Resetear variables del juego con configuración del nivel
+        player.money = levelConfig.startMoney;
         player.lives = 10;
         player.wave = 1;
+        player.currentLevel = currentLevel;
+        player.levelDifficulty = levelConfig.difficultyType;
         towers = [];
         enemies = [];
         bullets = [];
@@ -983,9 +1169,9 @@ function startGameFromMenu() {
             bossActive = false;
         }
 
-        // Reinicializar camino y decoraciones
+        // Reinicializar camino y decoraciones con mapa aleatorio para el nivel
         if (typeof initPath === 'function') initPath();
-        if (typeof initDecorations === 'function') initDecorations();
+        if (typeof initDecorations === 'function') initDecorations(levelConfig.mapSeed);
         if (typeof initCamera === 'function') initCamera();
 
         // Incrementar partidas jugadas
@@ -1000,7 +1186,7 @@ function startGameFromMenu() {
         // Iniciar primera oleada usando WaveManager
         WaveManager.startWave(player.wave);
         
-        console.log('[MENU] Juego iniciado - Canvas:', gameCanvas ? 'visible' : 'no encontrado');
+        console.log('[MENU] Juego iniciado - Nivel:', currentLevel, '- Dificultad:', levelConfig.difficultyType);
     });
 }
 
