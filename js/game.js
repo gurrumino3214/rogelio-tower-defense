@@ -382,6 +382,14 @@ function resizeCanvas() {
 // Hacer resizeCanvas disponible globalmente para menu.js
 window.resizeCanvas = resizeCanvas;
 
+// Hacer otras funciones disponibles globalmente para menu.js
+window.initPath = initPath;
+window.initDecorations = initDecorations;
+window.initCamera = initCamera;
+window.screenToWorld = screenToWorld;
+window.screenToInternal = screenToInternal;
+window.WaveManager = WaveManager;
+
 // Función auxiliar para convertir coordenadas de pantalla a coordenadas internas del juego
 function screenToInternal(screenX, screenY) {
     return {

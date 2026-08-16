@@ -17,6 +17,13 @@
     <script>
         // Inicializar el menú cuando la página cargue
         window.addEventListener('load', function() {
+            // Asegurar que el canvas sea visible desde el inicio
+            const gameCanvas = document.getElementById('gameCanvas');
+            if (gameCanvas) {
+                gameCanvas.style.display = 'block';
+                gameCanvas.style.visibility = 'visible';
+                gameCanvas.style.opacity = '1';
+            }
             initMenu();
         });
     </script>
