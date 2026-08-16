@@ -3,6 +3,23 @@
 // Versión Auditada y Reparada
 // ==========================================
 
+// ==========================================
+// SISTEMA DE RESOLUCIÓN Y ESCALADO RESPONSIVE
+// ==========================================
+// Resolución interna base del juego (fixed internal resolution)
+const INTERNAL_WIDTH = 1280;
+const INTERNAL_HEIGHT = 720;
+const INTERNAL_ASPECT_RATIO = INTERNAL_WIDTH / INTERNAL_HEIGHT;
+
+// Variables de escalado
+let displayWidth = 0;
+let displayHeight = 0;
+let scaleX = 1;
+let scaleY = 1;
+let scale = 1;
+let offsetX = 0;
+let offsetY = 0;
+
 // Configuración del juego
 let canvas, ctx;
 // gameState se define en menu.js para compartir entre archivos
@@ -263,11 +280,17 @@ function initPath() {
 }
 
 // ==========================================
-// INICIALIZACIÓN
+// INICIALIZACION
 // ==========================================
 window.onload = function() {
     canvas = document.getElementById('gameCanvas');
     ctx = canvas.getContext('2d');
+    
+    // Configurar Canvas para pixel art nítido
+    ctx.imageSmoothingEnabled = false;
+    ctx.mozImageSmoothingEnabled = false;
+    ctx.webkitImageSmoothingEnabled = false;
+    ctx.msImageSmoothingEnabled = false;
     
     // Ajustar canvas al tamaño de la ventana
     resizeCanvas();
@@ -275,21 +298,73 @@ window.onload = function() {
     
     // Event listeners
     canvas.addEventListener('click', handleClick);
+    canvas.addEventListener('mousedown', handleMouseDown);
     
     // Iniciar el juego (se queda en MENU hasta que se presione Jugar)
     startGame();
 };
 
+/**
+ * Sistema responsive de escalado con letterboxing/pillarboxing
+ * Mantiene la relación de aspecto interna sin deformar
+ */
 function resizeCanvas() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    // Obtener tamaño de ventana disponible
+    displayWidth = window.innerWidth;
+    displayHeight = window.innerHeight;
+    
+    // Establecer tamaño del canvas al tamaño de la ventana
+    canvas.width = displayWidth;
+    canvas.height = displayHeight;
+    
+    // Calcular factor de escala manteniendo aspect ratio
+    const windowAspectRatio = displayWidth / displayHeight;
+    
+    if (windowAspectRatio > INTERNAL_ASPECT_RATIO) {
+        // Ventana más ancha que el juego - pillarboxing (barras laterales)
+        scale = displayHeight / INTERNAL_HEIGHT;
+        offsetX = (displayWidth - INTERNAL_WIDTH * scale) / 2;
+        offsetY = 0;
+    } else {
+        // Ventana más alta que el juego - letterboxing (barras superior/inferior)
+        scale = displayWidth / INTERNAL_WIDTH;
+        offsetX = 0;
+        offsetY = (displayHeight - INTERNAL_HEIGHT * scale) / 2;
+    }
+    
+    // Actualizar cámara con las nuevas dimensiones internas
     initPath();
-    initCamera(); // Actualizar cámara al redimensionar
-    console.log('[GAME] Canvas redimensionado:', canvas.width, 'x', canvas.height);
+    initCamera();
+    
+    console.log('[GAME] Canvas redimensionado:', displayWidth, 'x', displayHeight, 
+                '| Scale:', scale.toFixed(2), '| Offset:', offsetX.toFixed(0), offsetY.toFixed(0));
 }
 
 // Hacer resizeCanvas disponible globalmente para menu.js
 window.resizeCanvas = resizeCanvas;
+
+// Función auxiliar para convertir coordenadas de pantalla a coordenadas internas del juego
+function screenToInternal(screenX, screenY) {
+    return {
+        x: (screenX - offsetX) / scale,
+        y: (screenY - offsetY) / scale
+    };
+}
+
+// Variable para rastrear estado del mouse
+let mouseState = { x: 0, y: 0, down: false };
+
+function handleMouseDown(e) {
+    const rect = canvas.getBoundingClientRect();
+    const screenX = e.clientX - rect.left;
+    const screenY = e.clientY - rect.top;
+    
+    // Convertir a coordenadas internas
+    const internalPos = screenToInternal(screenX, screenY);
+    mouseState.x = internalPos.x;
+    mouseState.y = internalPos.y;
+    mouseState.down = true;
+}
 
 function startGame() {
     console.log('[GAME] Juego iniciado!');
@@ -306,8 +381,11 @@ function handleClick(e) {
     const screenX = e.clientX - rect.left;
     const screenY = e.clientY - rect.top;
 
-    // Convertir coordenadas de pantalla a coordenadas del mundo
-    const worldPos = screenToWorld(screenX, screenY);
+    // Convertir coordenadas de pantalla a coordenadas internas (considerando letterboxing/pillarboxing)
+    const internalPos = screenToInternal(screenX, screenY);
+    
+    // Convertir coordenadas internas a coordenadas del mundo usando la cámara
+    const worldPos = screenToWorld(internalPos.x, internalPos.y);
     const x = worldPos.x;
     const y = worldPos.y;
 
@@ -817,12 +895,18 @@ function updateBossRogelio(deltaTime) {
 // DIBUJADO
 // ==========================================
 function draw() {
-    // 1. Limpiar canvas completo
-    ctx.fillStyle = '#2d2d44';
+    // 1. Limpiar canvas completo con color de fondo para letterboxing/pillarboxing
+    ctx.fillStyle = '#0a0a0f';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    // 2. Aplicar transformaciones de cámara y screen shake
+    // 2. Aplicar transformaciones de escalado responsive y cámara
     ctx.save();
+    
+    // Aplicar offset para centrar el juego (letterboxing/pillarboxing)
+    ctx.translate(offsetX, offsetY);
+    
+    // Aplicar escala responsive
+    ctx.scale(scale, scale);
     
     // Aplicar zoom de la cámara
     ctx.scale(camera.zoom, camera.zoom);
