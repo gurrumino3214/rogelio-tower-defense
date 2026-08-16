@@ -1085,19 +1085,14 @@ function draw() {
 // DIBUJADO DE TERRENO DE FONDO
 // ==========================================
 function drawTerrainBackground() {
-    // Diseño simple: fondo de color sólido sin texturas
+    // Dibujar TODO el mapa completo para evitar areas negras
     const tileSize = 64;
     const cols = Math.ceil(worldWidth / tileSize);
     const rows = Math.ceil(worldHeight / tileSize);
     
-    // Optimización: solo dibujar tiles visibles en el viewport de la cámara
-    const startCol = Math.max(0, Math.floor(camera.x / tileSize) - 1);
-    const endCol = Math.min(cols, Math.ceil((camera.x + camera.width) / tileSize) + 1);
-    const startRow = Math.max(0, Math.floor(camera.y / tileSize) - 1);
-    const endRow = Math.min(rows, Math.ceil((camera.y + camera.height) / tileSize) + 1);
-    
-    for (let row = startRow; row < endRow; row++) {
-        for (let col = startCol; col < endCol; col++) {
+    // Dibujar todos los tiles del mapa completo (sin optimizacion de viewport)
+    for (let row = 0; row < rows; row++) {
+        for (let col = 0; col < cols; col++) {
             const x = col * tileSize;
             const y = row * tileSize;
             
