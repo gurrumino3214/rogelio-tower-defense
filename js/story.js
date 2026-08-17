@@ -391,11 +391,21 @@ let storyScreenVisible = false;
 let storyScreenLevel = 0;
 let pendingLevel = null;
 
+// Hacer variables disponibles globalmente para game.js
+window.storyScreenVisible = storyScreenVisible;
+window.pendingLevel = pendingLevel;
+window.storyScreenLevel = storyScreenLevel;
+
 // Mostrar pantalla de introducción de historia
 function showStoryScreen(level) {
     pendingLevel = level;
     storyScreenLevel = level;
     storyScreenVisible = true;
+    
+    // Actualizar variables globales
+    window.storyScreenVisible = storyScreenVisible;
+    window.pendingLevel = pendingLevel;
+    window.storyScreenLevel = storyScreenLevel;
     
     // Obtener historia del nivel
     const story = getLevelStory(level);
@@ -409,6 +419,11 @@ function continueFromStory() {
         currentLevel = pendingLevel;
         pendingLevel = null;
         storyScreenVisible = false;
+        
+        // Actualizar variables globales
+        window.storyScreenVisible = storyScreenVisible;
+        window.pendingLevel = pendingLevel;
+        window.storyScreenLevel = storyScreenLevel;
         
         // Iniciar el juego desde el menú
         if (typeof startGameFromMenu === 'function') {
@@ -519,3 +534,6 @@ window.showStoryScreen = showStoryScreen;
 window.continueFromStory = continueFromStory;
 window.drawStoryScreen = drawStoryScreen;
 window.handleStoryClick = handleStoryClick;
+window.storyScreenVisible = storyScreenVisible;
+window.pendingLevel = pendingLevel;
+window.storyScreenLevel = storyScreenLevel;
