@@ -1,3 +1,1 @@
-(js/story.js is a source file, so no need to add it to .gitignore)
-
-(empty)
+(js/menu.js is a source file, and there are no build artifacts, dependencies, or temp files in the changes)

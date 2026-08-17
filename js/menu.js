@@ -17,6 +17,21 @@ let currentLevel = 1; // Nivel actual seleccionado (1-50)
 let levelPage = 1; // Página actual del selector de niveles (1-5)
 
 // ==========================================
+// VARIABLES COMPARTIDAS CON GAME.JS
+// Estas variables se definen en game.js pero deben estar disponibles aquí
+// para evitar errores de referencia al iniciar el juego desde el menú
+// ==========================================
+let player = { money: 100, lives: 10, currentLevel: 1, enemiesDefeated: 0, wave: 1, levelDifficulty: 'normal' };
+let towers = [];
+let enemies = [];
+let bullets = [];
+let particles = [];
+let gameSpeed = 1;
+let gameStartTime = 0;
+let bossRogelio = null;
+let bossActive = false;
+
+// ==========================================
 // INICIALIZACIÓN DEL MENÚ
 // ==========================================
 function initMenu() {
@@ -1278,9 +1293,9 @@ function restartGame() {
         
         // Actualizar HUD
         updateHUD();
-        
-        // Iniciar primera oleada usando WaveManager
-        WaveManager.startWave(player.wave);
+
+        // Iniciar sistema de enemigos por nivel (SIN WAVES)
+        LevelEnemyManager.startLevel(currentLevel, levelConfig.enemyCount);
     });
 }
 
@@ -1334,19 +1349,16 @@ function updateHUD() {
     const bossCount = (typeof bossRogelio !== 'undefined' && bossRogelio && typeof bossActive !== 'undefined' && bossActive) ? 1 : 0;
     const aliveEnemies = enemyCount + bossCount;
     
-    // Obtener total de enemigos de la oleada actual desde WaveManager
+    // Obtener total de enemigos del nivel desde LevelEnemyManager
     let totalWaveEnemies = 0;
     let defeatedInWave = 0;
-    if (typeof WaveManager !== 'undefined') {
-        totalWaveEnemies = WaveManager.total + (WaveManager.bossSpawned ? 1 : 0);
-        if (WaveManager.bossWave || WaveManager.miniBossWave) {
-            totalWaveEnemies = WaveManager.total + 1; // Incluye el boss
-        }
-        defeatedInWave = WaveManager.defeated || 0;
+    if (typeof LevelEnemyManager !== 'undefined') {
+        totalWaveEnemies = LevelEnemyManager.totalEnemies || 0;
+        defeatedInWave = LevelEnemyManager.enemiesDefeated || 0;
     }
     
-    // Mostrar enemigos vivos / total de la oleada
-    document.getElementById('hudEnemies').textContent = `${aliveEnemies}/${totalWaveEnemies}`;
+    // Mostrar enemigos derrotados / total del nivel
+    document.getElementById('hudEnemies').textContent = `${defeatedInWave}/${totalWaveEnemies}`;
     
     // Actualizar tiempo jugado
     const stats = JSON.parse(localStorage.getItem('rogelioTD_stats') || '{}');
