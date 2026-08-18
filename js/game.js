@@ -37,7 +37,7 @@ const LevelEnemyManager = {
     enemiesSpawned: 0,      // Cantidad de enemigos ya generados
     enemiesDefeated: 0,     // Cantidad de enemigos derrotados
     spawnTimer: 0,
-    spawnInterval: 2000,    // Intervalo entre spawns (ms)
+    spawnInterval: 2000,    // Intervalo entre spawns (ms) - se ajusta según nivel
     active: false,
     bossSpawned: false,
     bossDefeated: false,
@@ -52,7 +52,22 @@ const LevelEnemyManager = {
         this.bossSpawned = false;
         this.bossDefeated = false;
         this.spawnTimer = 0;
-        console.log('[LEVEL] Nivel ' + levelNum + ' iniciado. Enemigos totales: ' + this.totalEnemies);
+        
+        // Ajustar spawnInterval según la duración objetivo del nivel
+        // Niveles 1-10: ~60s, niveles 11-20: ~120s, etc.
+        let targetDuration;
+        if (levelNum <= 10) targetDuration = 60;
+        else if (levelNum <= 20) targetDuration = 120;
+        else if (levelNum <= 30) targetDuration = 180;
+        else if (levelNum <= 40) targetDuration = 240;
+        else targetDuration = 300;
+        
+        // Calcular intervalo para distribuir los enemigos en la duración objetivo
+        // Dejar un 10% de margen para el boss final
+        const effectiveEnemies = Math.max(1, enemyCount - 1);
+        this.spawnInterval = Math.max(500, (targetDuration * 1000 * 0.9) / effectiveEnemies);
+        
+        console.log('[LEVEL] Nivel ' + levelNum + ' iniciado. Enemigos totales: ' + this.totalEnemies + ', Spawn interval: ' + this.spawnInterval.toFixed(0) + 'ms');
     },
     
     update: function(deltaTime) {
@@ -271,8 +286,9 @@ let path = [];
 function initPath(levelNum) {
     // El camino ahora usa coordenadas del mundo, no del canvas
     // Si se proporciona un nivel, usar el path generado para ese nivel
-    if (levelNum && typeof generatePathForLevel === 'function' && typeof worldWidth !== 'undefined' && typeof worldHeight !== 'undefined') {
-        path = generatePathForLevel(levelNum);
+    if (levelNum && typeof generatePathForLevel === 'function') {
+        // Pasar las dimensiones del mundo a generatePathForLevel
+        path = generatePathForLevel(levelNum, worldWidth, worldHeight);
         console.log('[PATH] Path generado para nivel', levelNum, ':', path.length, 'waypoints');
     } else {
         // Path por defecto (nivel 1 clásico)
@@ -559,12 +575,36 @@ function createEnemy(enemyType) {
 // TIPOS DE ENEMIGOS SEGÚN NIVEL
 // ==========================================
 function getEnemyTypeForLevel(level, enemyIndex) {
+    // Obtener configuración del nivel para aplicar multiplicadores de dificultad
+    let healthMult = 1.0;
+    let speedMult = 1.0;
+    
+    if (typeof getLevelConfig === 'function') {
+        try {
+            const config = getLevelConfig(level);
+            healthMult = config.enemyHealthMult || 1.0;
+            speedMult = config.enemySpeedMult || 1.0;
+        } catch(e) {
+            // Si no se puede obtener la config, usar valores por defecto
+            if (level >= 41) { healthMult = 2.0; speedMult = 1.5; }
+            else if (level >= 31) { healthMult = 1.8; speedMult = 1.5; }
+            else if (level >= 21) { healthMult = 1.5; speedMult = 1.0; }
+            else if (level >= 11) { healthMult = 1.0; speedMult = 1.0; }
+        }
+    } else {
+        // Fallback si getLevelConfig no está disponible
+        if (level >= 41) { healthMult = 2.0; speedMult = 1.5; }
+        else if (level >= 31) { healthMult = 1.8; speedMult = 1.5; }
+        else if (level >= 21) { healthMult = 1.5; speedMult = 1.0; }
+        else if (level >= 11) { healthMult = 1.0; speedMult = 1.0; }
+    }
+    
     const types = [
-        { name: 'goblin', health: 100, speed: 2, reward: 10, color: '#8BC34A', damage: 1 },
-        { name: 'bandit', health: 150, speed: 2.5, reward: 15, color: '#FF5722', damage: 2 },
-        { name: 'skeleton', health: 200, speed: 1.8, reward: 20, color: '#EEEEEE', damage: 2 },
-        { name: 'dark_knight', health: 300, speed: 1.5, reward: 30, color: '#3F51B5', damage: 3 },
-        { name: 'skeleton_lord', health: 500, speed: 1.2, reward: 50, color: '#9C27B0', damage: 4 }
+        { name: 'goblin', health: Math.floor(100 * healthMult), speed: 2 * speedMult, reward: 10, color: '#8BC34A', damage: 1 },
+        { name: 'bandit', health: Math.floor(150 * healthMult), speed: 2.5 * speedMult, reward: 15, color: '#FF5722', damage: 2 },
+        { name: 'skeleton', health: Math.floor(200 * healthMult), speed: 1.8 * speedMult, reward: 20, color: '#EEEEEE', damage: 2 },
+        { name: 'dark_knight', health: Math.floor(300 * healthMult), speed: 1.5 * speedMult, reward: 30, color: '#3F51B5', damage: 3 },
+        { name: 'skeleton_lord', health: Math.floor(500 * healthMult), speed: 1.2 * speedMult, reward: 50, color: '#9C27B0', damage: 4 }
     ];
     
     // Seleccionar tipo basado en el nivel y progreso del nivel
