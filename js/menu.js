@@ -1231,8 +1231,8 @@ function startGameFromMenu() {
             bossActive = false;
         }
 
-        // Reinicializar camino y decoraciones con mapa aleatorio para el nivel
-        if (typeof initPath === 'function') initPath();
+        // Reinicializar camino y decoraciones con mapa específico para el nivel
+        if (typeof initPath === 'function') initPath(currentLevel);
         if (typeof initDecorations === 'function') initDecorations(levelConfig.mapSeed);
         if (typeof initCamera === 'function') initCamera();
 
@@ -1301,8 +1301,8 @@ function restartGame() {
         menuElements.pauseMenu.classList.remove('active');
         menuElements.gameUI.classList.add('active');
         
-        // Reinicializar camino y decoraciones
-        if (typeof initPath === 'function') initPath();
+        // Reinicializar camino y decoraciones con el nivel actual
+        if (typeof initPath === 'function') initPath(currentLevel);
         if (typeof initDecorations === 'function') initDecorations(levelConfig.mapSeed);
         if (typeof initCamera === 'function') initCamera();
         

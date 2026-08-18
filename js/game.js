@@ -268,18 +268,25 @@ function initDecorations(mapSeed) {
 // Camino (waypoints) - En coordenadas del mundo
 let path = [];
 
-function initPath() {
+function initPath(levelNum) {
     // El camino ahora usa coordenadas del mundo, no del canvas
-    path = [
-        {x: 0, y: worldHeight * 0.17},
-        {x: worldWidth * 0.25, y: worldHeight * 0.17},
-        {x: worldWidth * 0.25, y: worldHeight * 0.67},
-        {x: worldWidth * 0.625, y: worldHeight * 0.67},
-        {x: worldWidth * 0.625, y: worldHeight * 0.33},
-        {x: worldWidth * 0.875, y: worldHeight * 0.33},
-        {x: worldWidth * 0.875, y: worldHeight * 0.83},
-        {x: worldWidth, y: worldHeight * 0.83}
-    ];
+    // Si se proporciona un nivel, usar el path generado para ese nivel
+    if (levelNum && typeof generatePathForLevel === 'function' && typeof worldWidth !== 'undefined' && typeof worldHeight !== 'undefined') {
+        path = generatePathForLevel(levelNum);
+        console.log('[PATH] Path generado para nivel', levelNum, ':', path.length, 'waypoints');
+    } else {
+        // Path por defecto (nivel 1 clásico)
+        path = [
+            {x: 0, y: worldHeight * 0.17},
+            {x: worldWidth * 0.25, y: worldHeight * 0.17},
+            {x: worldWidth * 0.25, y: worldHeight * 0.67},
+            {x: worldWidth * 0.625, y: worldHeight * 0.67},
+            {x: worldWidth * 0.625, y: worldHeight * 0.33},
+            {x: worldWidth * 0.875, y: worldHeight * 0.33},
+            {x: worldWidth * 0.875, y: worldHeight * 0.83},
+            {x: worldWidth, y: worldHeight * 0.83}
+        ];
+    }
 }
 
 // ==========================================
