@@ -30,6 +30,28 @@ let timePlayedSession = 0; // Tiempo jugado en sesión actual (segundos)
 let lastTimePlayedUpdate = 0;
 
 // ==========================================
+// VARIABLES DE HISTORIA (importadas de story.js vía window)
+// ==========================================
+// Estas variables se definen en story.js y se comparten mediante window
+let storyScreenVisible = false;
+let storyScreenLevel = 0;
+let pendingLevel = null;
+
+// Sincronizar con window cuando story.js las actualice
+Object.defineProperty(window, 'storyScreenVisible', {
+    get: function() { return storyScreenVisible; },
+    set: function(val) { storyScreenVisible = val; }
+});
+Object.defineProperty(window, 'storyScreenLevel', {
+    get: function() { return storyScreenLevel; },
+    set: function(val) { storyScreenLevel = val; }
+});
+Object.defineProperty(window, 'pendingLevel', {
+    get: function() { return pendingLevel; },
+    set: function(val) { pendingLevel = val; }
+});
+
+// ==========================================
 // SISTEMA DE ENEMIGOS POR NIVEL (SIN WAVES)
 // ==========================================
 const LevelEnemyManager = {
