@@ -32,6 +32,14 @@ let bossRogelio = null;
 let bossActive = false;
 
 // ==========================================
+// VARIABLES COMPARTIDAS CON STORY.JS
+// Variables para la pantalla de historia que deben estar disponibles en menu.js
+// ==========================================
+let storyScreenVisible = false;
+let storyScreenLevel = 0;
+let pendingLevel = null;
+
+// ==========================================
 // INICIALIZACIÓN DEL MENÚ
 // ==========================================
 function initMenu() {
@@ -1439,6 +1447,9 @@ window.menuAPI = {
     gameState: () => gameState,
     showTowerUpgradePanel: showTowerUpgradePanel
 };
+
+// Exportar startGameFromMenu para que story.js pueda llamarlo
+window.startGameFromMenu = startGameFromMenu;
 
 // Inicializar la primera página del tutorial cuando se abre el modal
 const howtoModalElement = document.getElementById('howtoModal');
