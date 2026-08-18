@@ -4,6 +4,10 @@
  * ==========================================
  * Sistema de menú profesional con animaciones,
  * sonido y gestión de estados.
+ * 
+ * NOTA: Las variables globales del juego (player, towers, enemies, bullets, 
+ * particles, gameSpeed, gameStartTime, bossRogelio, bossActive) están 
+ * definidas en game.js. Este archivo NO las redefine para evitar conflictos.
  */
 
 // ==========================================
@@ -17,27 +21,9 @@ let currentLevel = 1; // Nivel actual seleccionado (1-50)
 let levelPage = 1; // Página actual del selector de niveles (1-5)
 
 // ==========================================
-// VARIABLES COMPARTIDAS CON GAME.JS
-// Estas variables se definen en game.js pero deben estar disponibles aquí
-// para evitar errores de referencia al iniciar el juego desde el menú
+// VARIABLES DE HISTORIA (importadas de story.js)
 // ==========================================
-let player = { money: 100, lives: 10, currentLevel: 1, enemiesDefeated: 0, wave: 1, levelDifficulty: 'normal' };
-let towers = [];
-let enemies = [];
-let bullets = [];
-let particles = [];
-let gameSpeed = 1;
-let gameStartTime = 0;
-let bossRogelio = null;
-let bossActive = false;
-
-// ==========================================
-// VARIABLES COMPARTIDAS CON STORY.JS
-// Variables para la pantalla de historia que deben estar disponibles en menu.js
-// ==========================================
-let storyScreenVisible = false;
-let storyScreenLevel = 0;
-let pendingLevel = null;
+// storyScreenVisible, pendingLevel, storyScreenLevel se definen en story.js
 
 // ==========================================
 // INICIALIZACIÓN DEL MENÚ
