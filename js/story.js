@@ -402,7 +402,7 @@ function showStoryScreen(level) {
     storyScreenLevel = level;
     storyScreenVisible = true;
     
-    // Actualizar variables globales
+    // Actualizar variables globales en window para que game.js pueda acceder
     window.storyScreenVisible = storyScreenVisible;
     window.pendingLevel = pendingLevel;
     window.storyScreenLevel = storyScreenLevel;
