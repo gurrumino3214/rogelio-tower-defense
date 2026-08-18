@@ -5,27 +5,42 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rogelio Tower Defense</title>
     <link rel="stylesheet" href="css/styles.css">
+    <style>
+        /* Estilos críticos para asegurar que el canvas sea visible */
+        #gameCanvas {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+        #mainMenu.hidden, #menuBackground.hidden {
+            display: none !important;
+        }
+    </style>
 </head>
 <body>
     <div id="gameContainer">
         <canvas id="gameCanvas"></canvas>
     </div>
     
+    <!-- Scripts cargados en orden correcto -->
+    <!-- 1. Configuración de niveles (sin dependencias) -->
     <script src="js/menu_level_config.js"></script>
+    <!-- 2. Historia (depende de level config) -->
     <script src="js/story.js"></script>
+    <!-- 3. Game (define variables globales del juego) -->
     <script src="js/game.js"></script>
+    <!-- 4. Menu (depende de game.js y story.js) -->
     <script src="js/menu.js"></script>
+    <!-- 5. Inicialización -->
     <script>
         // Inicializar el menú cuando la página cargue
         window.addEventListener('load', function() {
-            // Asegurar que el canvas sea visible desde el inicio
-            const gameCanvas = document.getElementById('gameCanvas');
-            if (gameCanvas) {
-                gameCanvas.style.display = 'block';
-                gameCanvas.style.visibility = 'visible';
-                gameCanvas.style.opacity = '1';
+            console.log('[INIT] Página cargada, inicializando menú...');
+            if (typeof initMenu === 'function') {
+                initMenu();
+            } else {
+                console.error('[INIT] Error: initMenu no está definido');
             }
-            initMenu();
         });
     </script>
 </body>
