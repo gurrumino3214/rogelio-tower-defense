@@ -285,7 +285,9 @@ function initPath() {
 // ==========================================
 // INICIALIZACION
 // ==========================================
-window.onload = function() {
+// NOTA: La inicialización ahora se hace desde index.html
+// para asegurar que el menú se cargue primero
+function initGame() {
     canvas = document.getElementById('gameCanvas');
     ctx = canvas.getContext('2d');
     
@@ -307,9 +309,18 @@ window.onload = function() {
     canvas.addEventListener('click', handleClick);
     canvas.addEventListener('mousedown', handleMouseDown);
     
-    // Iniciar el juego (se queda en MENU hasta que se presione Jugar)
-    startGame();
-};
+    // Inicializar cámara y decoraciones
+    initCamera();
+    initDecorations();
+    
+    console.log('[GAME] Sistema de juego inicializado!');
+}
+
+// Hacer initGame disponible globalmente para index.html
+window.initGame = initGame;
+
+// Hacer startGame disponible globalmente para menu.js
+window.startGame = startGame;
 
 /**
  * Sistema responsive de escalado con letterboxing/pillarboxing
