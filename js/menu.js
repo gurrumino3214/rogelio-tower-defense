@@ -16,9 +16,30 @@
 let menuElements = {};
 let audioContext = null;
 let isMuted = false;
-let gameState = 'MENU'; // MENU, PLAYING, PAUSED, GAMEOVER, VICTORY
-let currentLevel = 1; // Nivel actual seleccionado (1-50)
+// gameState se comparte con game.js a través de window
+if (typeof window.gameState === 'undefined') {
+    window.gameState = 'MENU';
+}
+let gameState = window.gameState; // MENU, PLAYING, PAUSED, GAMEOVER, VICTORY
+
+// currentLevel se comparte entre todos los archivos
+if (typeof window.currentLevel === 'undefined') {
+    window.currentLevel = 1;
+}
+let currentLevel = window.currentLevel; // Nivel actual seleccionado (1-50)
+
+// levelPage es local del menú
 let levelPage = 1; // Página actual del selector de niveles (1-5)
+
+// Sincronizar con window cuando cambian
+Object.defineProperty(window, 'gameState', {
+    get: function() { return gameState; },
+    set: function(val) { gameState = val; }
+});
+Object.defineProperty(window, 'currentLevel', {
+    get: function() { return currentLevel; },
+    set: function(val) { currentLevel = val; }
+});
 
 // ==========================================
 // VARIABLES DE HISTORIA (importadas de story.js)
