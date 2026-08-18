@@ -6,7 +6,12 @@
  */
 
 // Generador de caminos procedurales basado en semilla
-function generatePathForLevel(level) {
+// NOTA: worldWidth y worldHeight se pasan como parámetros para evitar problemas de orden de carga
+function generatePathForLevel(level, ww, wh) {
+    // Valores por defecto si no se proporcionan
+    ww = ww || 2048;
+    wh = wh || 1536;
+    
     // Usar una semilla única para cada nivel
     const seed = level * 12345;
     
@@ -16,10 +21,6 @@ function generatePathForLevel(level) {
         random = (random * 9301 + 49297) % 233280;
         return random / 233280;
     }
-    
-    // Dimensiones del mundo
-    const ww = worldWidth;
-    const wh = worldHeight;
     
     // Diferentes patrones de camino según el nivel
     const pattern = level % 10;
@@ -208,8 +209,8 @@ function getLevelConfig(level) {
         bossEveryWave = false;
     }
     
-    // Generar path específico para este nivel
-    const path = generatePathForLevel(level);
+    // Generar path específico para este nivel (pasar dimensiones por defecto)
+    const path = generatePathForLevel(level, 2048, 1536);
     
     return {
         level: level,
@@ -231,3 +232,73 @@ function getLevelConfig(level) {
 // Hacer disponible globalmente
 window.getLevelConfig = getLevelConfig;
 window.generatePathForLevel = generatePathForLevel;
+
+// ==========================================
+// VALIDACIÓN DE LOS 50 NIVELES
+// ==========================================
+function validateAllLevels() {
+    console.log('[VALIDATION] Validando los 50 niveles...');
+    let errors = [];
+    let warnings = [];
+    
+    for (let level = 1; level <= 50; level++) {
+        try {
+            const config = getLevelConfig(level);
+            
+            // Verificar propiedades requeridas
+            if (!config.level) errors.push(`Nivel ${level}: falta 'level'`);
+            if (!config.path || config.path.length === 0) errors.push(`Nivel ${level}: falta 'path' o está vacío`);
+            if (!config.spawnPoint) errors.push(`Nivel ${level}: falta 'spawnPoint'`);
+            if (!config.basePoint) errors.push(`Nivel ${level}: falta 'basePoint'`);
+            if (!config.enemyCount || config.enemyCount <= 0) errors.push(`Nivel ${level}: enemyCount inválido`);
+            if (!config.difficultyType) errors.push(`Nivel ${level}: falta 'difficultyType'`);
+            if (config.startMoney === undefined) errors.push(`Nivel ${level}: falta 'startMoney'`);
+            
+            // Verificar que el path tenga al menos 2 waypoints
+            if (config.path && config.path.length < 2) {
+                errors.push(`Nivel ${level}: path debe tener al menos 2 waypoints`);
+            }
+            
+            // Verificar que cada waypoint tenga x e y
+            if (config.path) {
+                for (let i = 0; i < config.path.length; i++) {
+                    if (config.path[i].x === undefined || config.path[i].y === undefined) {
+                        errors.push(`Nivel ${level}: waypoint ${i} no tiene coordenadas x,y`);
+                    }
+                }
+            }
+            
+            // Verificar que los paths sean diferentes entre niveles consecutivos
+            if (level > 1) {
+                const prevConfig = getLevelConfig(level - 1);
+                if (JSON.stringify(config.path) === JSON.stringify(prevConfig.path)) {
+                    warnings.push(`Nivel ${level}: tiene el mismo path que el nivel ${level - 1}`);
+                }
+            }
+            
+            console.log(`[VALIDATION] Nivel ${level}: OK - ${config.enemyCount} enemigos, path con ${config.path.length} waypoints`);
+            
+        } catch (e) {
+            errors.push(`Nivel ${level}: Error al obtener configuración - ${e.message}`);
+        }
+    }
+    
+    if (errors.length > 0) {
+        console.error('[VALIDATION] ERRORES ENCONTRADOS:');
+        errors.forEach(err => console.error('  - ' + err));
+    }
+    
+    if (warnings.length > 0) {
+        console.warn('[VALIDATION] ADVERTENCIAS:');
+        warnings.forEach(warn => console.warn('  - ' + warn));
+    }
+    
+    if (errors.length === 0 && warnings.length === 0) {
+        console.log('[VALIDATION] Todos los niveles son válidos!');
+    }
+    
+    return { errors, warnings, valid: errors.length === 0 };
+}
+
+// Hacer validateAllLevels disponible globalmente
+window.validateAllLevels = validateAllLevels;
