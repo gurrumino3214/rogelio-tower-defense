@@ -33,13 +33,29 @@
     <script src="js/menu.js"></script>
     <!-- 5. Inicialización -->
     <script>
-        // Inicializar el menú cuando la página cargue
+        // Inicializar el juego cuando la página cargue
         window.addEventListener('load', function() {
-            console.log('[INIT] Página cargada, inicializando menú...');
+            console.log('[INIT] Página cargada, inicializando sistema...');
+            
+            // Primero inicializar el canvas y sistema de juego
+            if (typeof initGame === 'function') {
+                initGame();
+            } else {
+                console.error('[INIT] Error: initGame no está definido');
+            }
+            
+            // Luego inicializar el menú
             if (typeof initMenu === 'function') {
                 initMenu();
             } else {
                 console.error('[INIT] Error: initMenu no está definido');
+            }
+            
+            // Finalmente iniciar el game loop (pero el estado será MENU)
+            if (typeof startGame === 'function') {
+                startGame();
+            } else {
+                console.error('[INIT] Error: startGame no está definido');
             }
         });
     </script>
