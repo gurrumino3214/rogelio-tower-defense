@@ -387,43 +387,31 @@ window.levelsStory = levelsStory;
 // ==========================================
 
 // Variables para la pantalla de historia
-let storyScreenVisible = false;
-let storyScreenLevel = 0;
-let pendingLevel = null;
-
-// Hacer variables disponibles globalmente para game.js
-window.storyScreenVisible = storyScreenVisible;
-window.pendingLevel = pendingLevel;
-window.storyScreenLevel = storyScreenLevel;
+// Variables compartidas con game.js - usar window para evitar duplicación
+// Estas variables están definidas en game.js y se acceden a través de window
+function getStoryScreenVisible() { return window.storyScreenVisible || false; }
+function setStoryScreenVisible(val) { window.storyScreenVisible = val; }
+function getPendingLevel() { return window.pendingLevel || null; }
+function setPendingLevel(val) { window.pendingLevel = val; }
+function getStoryScreenLevel() { return window.storyScreenLevel || 0; }
+function setStoryScreenLevel(val) { window.storyScreenLevel = val; }
 
 // Mostrar pantalla de introducción de historia
 function showStoryScreen(level) {
-    pendingLevel = level;
-    storyScreenLevel = level;
-    storyScreenVisible = true;
+    setPendingLevel(level);
+    setStoryScreenLevel(level);
+    setStoryScreenVisible(true);
     
-    // Actualizar variables globales en window para que game.js pueda acceder
-    window.storyScreenVisible = storyScreenVisible;
-    window.pendingLevel = pendingLevel;
-    window.storyScreenLevel = storyScreenLevel;
-    
-    // Obtener historia del nivel
-    const story = getLevelStory(level);
-    
-    console.log('[STORY] Mostrando introducción para Nivel ' + level + ': ' + story.title);
+    console.log('[STORY] Mostrando introducción para Nivel ' + level + ': ' + getLevelStory(level).title);
 }
 
 // Continuar desde pantalla de historia al juego
 function continueFromStory() {
+    const pendingLevel = getPendingLevel();
     if (pendingLevel !== null) {
-        currentLevel = pendingLevel;
-        pendingLevel = null;
-        storyScreenVisible = false;
-        
-        // Actualizar variables globales
-        window.storyScreenVisible = storyScreenVisible;
-        window.pendingLevel = pendingLevel;
-        window.storyScreenLevel = storyScreenLevel;
+        window.currentLevel = pendingLevel;
+        setPendingLevel(null);
+        setStoryScreenVisible(false);
         
         // Iniciar el juego desde el menú
         if (typeof startGameFromMenu === 'function') {
@@ -434,7 +422,7 @@ function continueFromStory() {
 
 // Dibujar pantalla de historia
 function drawStoryScreen() {
-    if (!storyScreenVisible) return;
+    if (!getStoryScreenVisible()) return;
     
     // Verificar que canvas y ctx estén disponibles
     if (typeof canvas === 'undefined' || typeof ctx === 'undefined') {
@@ -442,7 +430,7 @@ function drawStoryScreen() {
         return;
     }
     
-    const story = getLevelStory(storyScreenLevel);
+    const story = getLevelStory(getStoryScreenLevel());
     
     // Fondo semi-transparente
     ctx.fillStyle = 'rgba(0, 0, 0, 0.95)';
@@ -457,7 +445,7 @@ function drawStoryScreen() {
     ctx.fillStyle = '#ffd700';
     ctx.font = 'bold 48px Arial, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('NIVEL ' + storyScreenLevel, canvas.width / 2, canvas.height / 2 - 180);
+    ctx.fillText('NIVEL ' + getStoryScreenLevel(), canvas.width / 2, canvas.height / 2 - 180);
     
     // Título de la historia
     ctx.fillStyle = '#ffffff';
@@ -506,7 +494,7 @@ function drawStoryScreen() {
 
 // Manejar clicks en la pantalla de historia
 function handleStoryClick(screenX, screenY) {
-    if (!storyScreenVisible) return;
+    if (!getStoryScreenVisible()) return;
     
     // Usar window.canvas para asegurar que tenemos el canvas correcto
     if (!window.canvas) {
@@ -534,6 +522,4 @@ window.showStoryScreen = showStoryScreen;
 window.continueFromStory = continueFromStory;
 window.drawStoryScreen = drawStoryScreen;
 window.handleStoryClick = handleStoryClick;
-window.storyScreenVisible = storyScreenVisible;
-window.pendingLevel = pendingLevel;
-window.storyScreenLevel = storyScreenLevel;
+// Las variables storyScreenVisible, pendingLevel, storyScreenLevel ahora se manejan a través de window desde game.js
